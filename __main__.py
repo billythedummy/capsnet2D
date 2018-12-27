@@ -58,9 +58,9 @@ def train_generator(x, y, batch_size):
 def train(model, data, args):
     #(x_train, y_train), (x_test, y_test) = data
 
-    tb = tf.keras.callbacks.TensorBoard(log_dir=args.working_dir + "/tb-logs", batch_size=args.batch_size)
+    tb = tf.keras.callbacks.TensorBoard(log_dir="./tb-logs", batch_size=args.batch_size) #args.working_dir + 
 
-    checkpt = tf.keras.callbacks.ModelCheckpoint(args.working_dir + "/chkpts/chkpt-{epoch:02d}.h5",
+    checkpt = tf.keras.callbacks.ModelCheckpoint("./chkpts/chkpt-{epoch:02d}.h5", #args.working_dir + 
                                                  save_best_only=True,
                                                  save_weights_only=True,
                                                  verbose=1)
@@ -116,7 +116,9 @@ if __name__ == "__main__":
 
     if args.from_chkpt or args.from_saved:
         if args.from_chkpt:
-            chkpts = glob.glob(args.working_dir + "/chkpts/chkpt-*.h5")
+            #chkpts = glob.glob(args.working_dir + "/chkpts/chkpt-*.h5")
+            #for colab
+            chkpts = glob.glob("./chkpt-*.h5")
         else:
             chkpts = glob.glob(args.working_dir + "/trained_model.h5")
         if len(chkpts) > 0:
