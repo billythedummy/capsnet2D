@@ -116,9 +116,9 @@ if __name__ == "__main__":
 
     if args.from_chkpt or args.from_saved:
         if args.from_chkpt:
-            chkpts = glob.glob("../capsnet_data/chkpts/chkpt-*.h5")
+            chkpts = glob.glob(args.working_dir + "/chkpts/chkpt-*.h5")
         else:
-            chkpts = glob.glob("../capsnet_data/trained_model.h5")
+            chkpts = glob.glob(args.working_dir + "/trained_model.h5")
         if len(chkpts) > 0:
             path = sorted(chkpts)[-1]
             model.load_weights(path)
