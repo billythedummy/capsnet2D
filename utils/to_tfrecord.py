@@ -63,6 +63,7 @@ def parse_fn_caps_tfrecord(example_proto):
                 'width': tf.FixedLenFeature((), tf.int64),
                 'depth': tf.FixedLenFeature((), tf.int64),
                 'caps_dim': tf.FixedLenFeature((), tf.int64),
+                'n_classes': tf.FixedLenFeature((), tf.int64),
                 'image_raw': tf.FixedLenFeature((), tf.string),
                 'output_raw': tf.FixedLenFeature((), tf.string)}
     parsed_features = tf.parse_single_example(example_proto, features)
@@ -70,10 +71,11 @@ def parse_fn_caps_tfrecord(example_proto):
     w = tf.cast(parsed_features['width'], tf.int32)
     d = tf.cast(parsed_features['depth'], tf.int32)
     img = tf.decode_raw(parsed_features["image_raw"], tf.float32)
-    img = tf.reshape(img, [h, w, d])
+    img = tf.reshape(img, [-1, h, w, d])
+    n_caps_channels = tf.cast(parsed_features['n_classes'], tf.int32) + 1
     caps_dim = tf.cast(parsed_features['caps_dim'], tf.int32)
     target_output = tf.decode_raw(parsed_features["output_raw"], tf.float32)
-    target_output = tf.reshape(target_output, [h, w, -1, caps_dim])
+    target_output = tf.reshape(target_output, [-1, h, w, n_caps_channels, caps_dim])
     return img, target_output
 
 def _bytes_feature(value):
@@ -83,7 +85,10 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 def write_dir(dirname, tf_record_name,
-              caps_dim=6, n_classes=1, out_width=None, out_height=None):
+              caps_dim=6,
+              n_classes=1,
+              out_width=None,
+              out_height=None):
     names = [os.path.basename(os.path.normpath(fname)).rsplit(".", 1)[0] for fname in glob.glob(dirname+"/*.csv")]
     options = tf.python_io.TFRecordOptions(tf.python_io.TFRecordCompressionType.GZIP)
     writer = tf.python_io.TFRecordWriter(tf_record_name, options=options)
@@ -100,6 +105,7 @@ def write_dir(dirname, tf_record_name,
             'height': _int64_feature(height),
             'width': _int64_feature(width),
             'depth': _int64_feature(depth),
+            'n_classes': _int64_feature(n_classes),
             'caps_dim': _int64_feature(caps_dim),
             'image_raw': _bytes_feature(x.tostring()),
             'output_raw': _bytes_feature(y.tostring())}))
@@ -121,4 +127,4 @@ if __name__ == "__main__":
               out_width=args.out_width,
               out_height=args.out_height)
     
-    print("Write " + args.data_dir + " to " + args.out_file + "complete!")
+    print("Write " + args.data_dir + " to " + args.out_file + " complete!")
