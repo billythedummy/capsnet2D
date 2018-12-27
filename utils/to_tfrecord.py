@@ -71,11 +71,11 @@ def parse_fn_caps_tfrecord(example_proto):
     w = tf.cast(parsed_features['width'], tf.int32)
     d = tf.cast(parsed_features['depth'], tf.int32)
     img = tf.decode_raw(parsed_features["image_raw"], tf.float32)
-    img = tf.reshape(img, [-1, h, w, d])
+    img = tf.reshape(img, [h, w, d])
     n_caps_channels = tf.cast(parsed_features['n_classes'], tf.int32) + 1
     caps_dim = tf.cast(parsed_features['caps_dim'], tf.int32)
     target_output = tf.decode_raw(parsed_features["output_raw"], tf.float32)
-    target_output = tf.reshape(target_output, [-1, h, w, n_caps_channels, caps_dim])
+    target_output = tf.reshape(target_output, [h, w, n_caps_channels, caps_dim])
     return img, target_output
 
 def _bytes_feature(value):
