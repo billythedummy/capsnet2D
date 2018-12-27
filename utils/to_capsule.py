@@ -99,7 +99,7 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     direc = "../../capsnet_data/data/raw/"
     im_name = "test"
-    im_file = direc + im_name + ".png"
+    im_file = direc + im_name + ".jpg"
     img = plt.imread(im_file)
     plt.imshow(img)
     csv_file = direc + im_name + '.csv'

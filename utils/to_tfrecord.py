@@ -7,7 +7,7 @@ import glob
 import os
 
 def to_tensors(directory, name,
-              img_format="png",
+              img_format="jpg",
               out_width=None,
               out_height=None,
               caps_dim=6):
@@ -107,9 +107,18 @@ def write_dir(dirname, tf_record_name,
     writer.close()
 
 if __name__ == "__main__":
-    #x, y = to_tensors("../../capsnet_data/data/raw", "test", out_width=255, out_height=128)
-    write_dir("../../capsnet_data/data/raw",
-              "../../capsnet_data/data/tfrecord/caps1.tfrecords",
-              out_width=255,
-              out_height=255)
-    print("Write complete!")
+    import argparse
+    parser = argparse.ArgumentParser(description="Data labelling for Capsule network")
+    parser.add_argument("--data_dir", default="../../capsnet_data/data/raw", type=str)
+    parser.add_argument("--image_format", default="jpg", type=str)
+    parser.add_argument("--out_file", default="../../capsnet_data/data/tfrecord/train.tfrecords", type=str)
+    parser.add_argument("--out_width", default=255, type=int)
+    parser.add_argument("--out_height", default=255, type=int)
+    args = parser.parse_args()
+    
+    write_dir(args.data_dir,
+              args.out_file,
+              out_width=args.out_width,
+              out_height=args.out_height)
+    
+    print("Write " + args.data_dir + " to " + args.out_file + "complete!")

@@ -69,7 +69,7 @@ def reset_state_vars(fname):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Data labelling for Capsule network")
     parser.add_argument("--image_dir", default="../../capsnet_data/data/raw", type=str)
-    parser.add_argument("--image_format", default="png", type=str)
+    parser.add_argument("--image_format", default="jpg", type=str)
     args = parser.parse_args()
     
     img_fnames = glob.glob(args.image_dir + "/*." + args.image_format)
