@@ -1,5 +1,5 @@
 import tensorflow as tf
-from caps_layer import CapsLayer2D
+from capsnet_model.caps_layer import CapsLayer2D
 
 class CapsNet(tf.keras.Model):
     # Input 4D tensor (samples/ batch size, rows, cols, channels)

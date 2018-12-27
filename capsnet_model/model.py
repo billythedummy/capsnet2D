@@ -1,5 +1,5 @@
 import tensorflow as tf
-from caps_layer import CapsLayer2D
+from capsnet_model.caps_layer import CapsLayer2D
 
 def CapsNet(input_shape=(255, 255, 3),
             n_class=1,
