@@ -76,7 +76,7 @@ def train(model, data, args):
     #for TFRecord
     training_set = tfrecord_generator(args.working_dir + "/" + args.train_path, args.batch_size)
     model.fit(training_set.make_one_shot_iterator(),
-              steps_per_epoch=max(1, 20 / args.batch_size), #lol shit how to determine dataset size from tfrecord file
+              steps_per_epoch=max(1, int(20 / args.batch_size)), #lol shit how to determine dataset size from tfrecord file
               epochs=args.epochs,
               verbose=1)
     
