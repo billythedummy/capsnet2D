@@ -107,7 +107,7 @@ if __name__ == "__main__":
         reader = csv.reader(csv_f, delimiter=',')
         for row in reader:
             row = np.array(row, dtype=np.float32)
-            print to_capsule(row, img)
+            #print to_capsule(row, img)
             x = row[0:7:2]
             x = np.append(x, row[0])
             y = row[1:8:2]
