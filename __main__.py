@@ -53,7 +53,7 @@ def train_generator(x, y, batch_size):
         #print("Yielding new batch...")
         yield (x_batch, y_batch)
 
-def train(model, data=None, args):
+def train(model, args, data=None):
     tb = tf.keras.callbacks.TensorBoard(log_dir=args.working_dir + "/tb-logs", batch_size=args.batch_size) 
 
     checkpt = tf.keras.callbacks.ModelCheckpoint(args.working_dir + "/chkpts/chkpt-{epoch:02d}.h5",
@@ -127,4 +127,4 @@ if __name__ == "__main__":
     
     model.summary()
 
-    train(model=model, data=None, args=args)
+    train(model=model, args=args, data=None)
