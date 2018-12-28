@@ -6,8 +6,6 @@ from capsnet_model.caps_layer import CapsLayer2D
 
 from utils.to_tfrecord import parse_fn_caps_tfrecord
 
-from utils.colab_utils import GDriveCheckpointer
-
 def load_data(tfrecordpath):
     x_train = np.ones([1, 255, 255, 3])
     y_train = np.zeros([1, 255, 255, 2, 6])
@@ -61,6 +59,7 @@ def train(model, data, args):
     tb = tf.keras.callbacks.TensorBoard(log_dir=args.working_dir + "/tb-logs", batch_size=args.batch_size) 
 
     if args.on_colab:
+        from utils.colab_utils import GDriveCheckpointer
         def compare(best, new):
             return best.losses['val_acc'] < new.losses['val_acc']
 
@@ -71,10 +70,10 @@ def train(model, data, args):
         checkpt = GDriveCheckpointer(compare, path)
 
     else:
-        checkpt = tf.keras.callbacks.ModelCheckpoint(args.working_dir + "/chkpts/chkpt-{epoch:02d}.h5",
-                                                     save_best_only=True,
-                                                     save_weights_only=True,
-                                                     verbose=1)
+    checkpt = tf.keras.callbacks.ModelCheckpoint(args.working_dir + "/chkpts/chkpt-{epoch:02d}.h5",
+                                                 save_best_only=True,
+                                                 save_weights_only=True,
+                                                 verbose=1)
     lr_decay = tf.keras.callbacks.LearningRateScheduler(schedule=lambda epoch: args.lr * (args.lr_decay ** epoch))
 
     model.compile(optimizer=tf.keras.optimizers.Adam(lr=args.lr),
@@ -88,6 +87,7 @@ def train(model, data, args):
     training_set = tfrecord_generator(args.working_dir + "/" + args.train_path, args.batch_size)
     model.fit(training_set.make_one_shot_iterator(),
               steps_per_epoch=max(1, int(20 / args.batch_size)), #lol shit how to determine dataset size from tfrecord file
+              callbacks=[tb, checkpt, lr_decay],
               epochs=args.epochs,
               verbose=1)
     
