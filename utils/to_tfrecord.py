@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import csv
 from PIL import Image
-from utils.to_capsule import to_capsule, linear_map
+from to_capsule import to_capsule, linear_map
 import glob
 import os
 
@@ -38,7 +38,7 @@ def to_tensors(directory, name,
     caps_channel = np.expand_dims(caps_channel, -2)
     bg_channel = np.expand_dims(bg_channel, -2)
     target_tensor = np.concatenate((caps_channel, bg_channel), axis=-2)
-    return img_np.astype(np.float32), normalize_to_unit(target_tensor.astype(np.float32))
+    return img_np.astype(np.float32), target_tensor.astype(np.float32)
 
 def create_capsule_channel(img_tensor, capsules, caps_dim):
     shape = np.array(img_tensor.shape[:2])
@@ -58,7 +58,7 @@ def create_background_channel(capsule_channels, caps_dim):
         res[np.nonzero(caps_channel)] = 0
     return res
 
-def normalize_to_unit(vectors, axis=-1):
+def normalize_capsule(vectors, axis=-1):
     squared_norm = np.sum(np.square(vectors), axis, keepdims=True)
     scale = 1 / (np.sqrt(squared_norm) + np.finfo(np.float32).eps)
     return scale * vectors

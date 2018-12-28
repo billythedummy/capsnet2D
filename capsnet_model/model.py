@@ -27,7 +27,7 @@ def CapsNet(input_shape=(255, 255, 3),
 
     capsa = CapsLayer2D(7, batch_size=batch_size, n_routings=n_routings, name="Capsule_Layer_7")(reshape)
 
-    capsb = CapsLayer2D(n_class + 1, batch_size=batch_size, n_routings=n_routings, name="Final_Capsules")(capsa)
+    capsb = CapsLayer2D(n_class + 1, batch_size=batch_size, n_routings=n_routings, last=True, name="Final_Capsules")(capsa)
 
     model = tf.keras.Model(input_layer, capsb)
     return model
