@@ -18,17 +18,24 @@ def weighted_vec_loss(y_true, y_pred):
     y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
     y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
 
+
     #background only uses magnitude of vectors for comparison
     y_bg_mag = tf.sqrt(tf.reduce_sum(tf.square(y_bg), -1)) 
     y_pred_bg_mag = tf.sqrt(tf.reduce_sum(tf.square(y_pred_bg), -1))
-    bg_loss = tf.abs(y_bg_mag - y_pred_bg_mag)
+    bg_ones = tf.ones(tf.keras.backend.int_shape(y_bg_mag)) #[None, h, w, 1]
+    #bg_loss = tf.abs(y_bg_mag - y_pred_bg_mag)
+    #binary cross entropy for background
+    bg_loss = -(tf.multiply(y_bg_mag, tf.log(y_pred_bg_mag))
+                + tf.multiply(bg_ones - y_bg_mag, tf.log(bg_ones - y_pred_bg_mag)))
     bg_loss = tf.reduce_sum(bg_loss)
 
     #classes uses both magnitude and direction so magnitude of vector diff
-    elems = (tf.reshape(y_classes, [-1]), tf.reshape(y_pred_classes, [-1]))
+    caps_dim = tf.keras.backend.int_shape(y_classes)[-1]
+    elems = (tf.reshape(y_classes, [-1, caps_dim]), tf.reshape(y_pred_classes, [-1, caps_dim]))
+    #single_one = tf.ones([1])
     length = tf.keras.backend.int_shape(elems[1])[0]
-    class_loss = tf.map_fn(lambda x: tf.sqrt(tf.square(x[0] - x[1])) if x[0] == 0
-                           else length * tf.sqrt(tf.square(x[0] - x[1])), #generally bad practice to use a var outside of lambda scope here but its constant so wtv
+    class_loss = tf.map_fn(lambda x: -tf.log(1 - tf.norm(x[1])) if x[0] == 0
+                           else -length * tf.log(1 - tf.norm(x[0] - x[1])), #generally bad practice to use a var outside of lambda scope here but its constant so wtv
                            elems,
                            dtype=tf.float32)
     

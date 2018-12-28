@@ -3,6 +3,7 @@ import tensorflow as tf
 import csv
 from PIL import Image
 from utils.to_capsule import to_capsule, linear_map
+from capsnet_model.caps_layer import squash
 import glob
 import os
 
@@ -38,7 +39,7 @@ def to_tensors(directory, name,
     caps_channel = np.expand_dims(caps_channel, -2)
     bg_channel = np.expand_dims(bg_channel, -2)
     target_tensor = np.concatenate((caps_channel, bg_channel), axis=-2)
-    return img_np.astype(np.float32), target_tensor.astype(np.float32)
+    return img_np.astype(np.float32), squash(target_tensor.astype(np.float32))
     
 def create_capsule_channel(img_tensor, capsules, caps_dim):
     shape = np.array(img_tensor.shape[:2])
