@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 
 from capsnet_model.model import CapsNet
-from capsnet_model.caps_layer import CapsLayer2D
+from capsnet_model.caps_layer import squash
 
 from utils.to_tfrecord import parse_fn_caps_tfrecord
 
@@ -35,7 +35,7 @@ def weighted_vec_loss(y_true, y_pred):
     #single_one = tf.ones([1])
     length = tf.keras.backend.int_shape(elems[1])[0]
     class_loss = tf.map_fn(lambda x: -tf.log(1 - tf.norm(x[1])) if x[0] == 0
-                           else -length * tf.log(1 - tf.norm(x[0] - x[1])), #generally bad practice to use a var outside of lambda scope here but its constant so wtv
+                           else -length * tf.log(1 - tf.norm(squash(x[0] - x[1]))), #generally bad practice to use a var outside of lambda scope here but its constant so wtv
                            elems,
                            dtype=tf.float32)
     
