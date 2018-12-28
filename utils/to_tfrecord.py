@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import csv
 from PIL import Image
-from utils.to_capsule import to_capsule, linear_map
+from to_capsule import to_capsule, linear_map
 import glob
 import os
 
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Data labelling for Capsule network")
     parser.add_argument("--data_dir", default="../../capsnet_data/data/raw", type=str)
     parser.add_argument("--image_format", default="jpg", type=str)
-    parser.add_argument("--out_file", default="../../capsnet_data/data/tfrecord/train.tfrecords", type=str)
+    parser.add_argument("--out_file", required=True, type=str)
     parser.add_argument("--out_width", default=255, type=int)
     parser.add_argument("--out_height", default=255, type=int)
     args = parser.parse_args()
