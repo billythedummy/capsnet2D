@@ -46,9 +46,10 @@ def weighted_vec_loss(y_true, y_pred):
 def tfrecord_generator(filenames, batch_size):
     dataset = tf.data.TFRecordDataset(filenames, compression_type='GZIP')
     dataset = dataset.map(parse_fn_caps_tfrecord, num_parallel_calls=8)
-    dataset = dataset.repeat()
+    dataset = dataset.shuffle(buffer_size=10000)
     dataset = dataset.batch(batch_size)
     dataset = dataset.prefetch(tf.contrib.data.AUTOTUNE)
+    dataset = dataset.repeat()
     return dataset
 
 def train_generator(x, y, batch_size):
