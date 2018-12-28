@@ -14,6 +14,8 @@ def load_data(tfrecordpath):
     return (x_train, y_train), (x_test, y_test)
 
 def weighted_vec_loss(y_true, y_pred):
+    #use tf.keras.backend.int_shape for var dimensions known at compile time
+    #use tf.shape for var dimensions known at run time (e.g. batch size)
     n_classes = tf.keras.backend.int_shape(y_pred)[-2] - 1
     y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
     y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
@@ -30,14 +32,12 @@ def weighted_vec_loss(y_true, y_pred):
     bg_loss = tf.reduce_sum(bg_loss)
 
     #classes uses both magnitude and direction so magnitude of vector diff
-    caps_dim = tf.keras.backend.int_shape(y_pred)[-1]
-    elems = (tf.reshape(y_classes, [-1, caps_dim]), tf.reshape(y_pred_classes, [-1, caps_dim]))
-    #single_one = tf.ones([1])
-    length = tf.shape(elems[1])[0]
-    class_loss = tf.map_fn(lambda x: -tf.log(1 - tf.norm(x[1])) if x[0] == 0
-                           else -length * tf.log(1 - tf.norm(squash(x[0] - x[1]))), #generally bad practice to use a var outside of lambda scope here but its constant so wtv
-                           elems,
-                           dtype=tf.float32)
+    y_classes_mag = tf.sqrt(tf.reduce_sum(tf.square(y_classes), -1))
+    vec_diff = squash(y_classes - y_pred_classes)
+    class_norm = tf.sqrt(tf.reduce_sum(tf.square(vec_diff), -1))
+    class_ones = tf.ones(tf.shape(class_norm))
+    class_loss = -(tf.multiply(y_classes_mag, tf.log(class_ones - class_norm))
+                + tf.multiply(class_ones - y_classes_mag, tf.log(class_ones - class_norm)))
     
     class_loss = tf.reduce_sum(class_loss)
     loss = 0.6 * class_loss + 0.4 * bg_loss #weigh background less
@@ -99,11 +99,12 @@ def train(model, args, data=None):
     return model
                   
 if __name__ == "__main__":
+    
     import argparse
     import glob
     parser = argparse.ArgumentParser(description="2D Capsule Network. Run from inside the main repo.")
     parser.add_argument("--epochs", default=50, type=int)
-    parser.add_argument("--batch_size", default=20, type=int)
+    parser.add_argument("--batch_size", default=5, type=int)
     parser.add_argument("--lr", default=0.001, type=float, help="Initial learning rate")
     parser.add_argument("--lr_decay", default=0.95, type=float, help="Exponent base for decay. Between 0-1")
     parser.add_argument("--routings", default=3, type=int, help="Number of routings for capsules")
@@ -135,3 +136,25 @@ if __name__ == "__main__":
     model.summary()
 
     train(model=model, args=args, data=None)
+
+    '''
+    x_train = np.ones([2, 255, 255, 3])
+    y_train = np.zeros([2, 255, 255, 2, 6])
+    x_test = np.ones([1, 255, 255, 3])
+    y_test = np.zeros([1, 255, 255, 2, 6])
+    data = (x_train, y_train), (x_test, y_test)
+    
+    sess = tf.Session()
+    with sess.as_default():
+        t1 = np.ones([56, 6], dtype=np.float32)
+        t2 = np.ones([28, 6], dtype=np.float32)
+        t2 = np.concatenate((np.zeros([28, 6], dtype=np.float32), t2))
+        t1 = np.expand_dims(t1, 1)
+        t2 = np.expand_dims(t2, 1)
+        tx = np.concatenate((t1, t2), 1)
+        print tx.shape
+        t3 = tf.map_fn(lambda x: tf.cond(tf.constant(x[1][0] == 0, dtype=tf.bool), lambda: x[1], lambda:x[0]+x[1]), #generally bad practice to use a var outside of lambda scope here but its constant so wtv
+                               tx,
+                               dtype=tf.float32)
+        print t3.eval()
+    '''

@@ -98,11 +98,6 @@ class CapsLayer2D(tf.keras.layers.Layer):
         return squash(res)
     
 def squash(vectors, axis=-1):
-    squared_norm = tf.reduce_sum(tf.square(vectors), axis)
+    squared_norm = tf.reduce_sum(tf.square(vectors), axis, keepdims=True)
     scale = tf.sqrt(squared_norm) / (1 + squared_norm)
-    scale = tf.expand_dims(scale, axis)
-    # this assumes axis=-1 which is retarded
-    multiples = tf.constant([1, 1, 1, 1, int(vectors.shape[axis])])
-    scale = tf.tile(scale, multiples)
-    # but tensor doesnt support assignment so i cant do dynamic generation
     return scale * vectors
