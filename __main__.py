@@ -71,7 +71,7 @@ def train(model, data, args):
 
     else:
         checkpt = tf.keras.callbacks.ModelCheckpoint(args.working_dir + "/chkpts/chkpt-{epoch:02d}.h5",
-                                                     save_best_only=True,
+                                                     save_best_only=False, #True can only work with validation loss
                                                      save_weights_only=True,
                                                      verbose=1)
     lr_decay = tf.keras.callbacks.LearningRateScheduler(schedule=lambda epoch: args.lr * (args.lr_decay ** epoch))
