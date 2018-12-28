@@ -70,10 +70,10 @@ def train(model, data, args):
         checkpt = GDriveCheckpointer(compare, path)
 
     else:
-    checkpt = tf.keras.callbacks.ModelCheckpoint(args.working_dir + "/chkpts/chkpt-{epoch:02d}.h5",
-                                                 save_best_only=True,
-                                                 save_weights_only=True,
-                                                 verbose=1)
+        checkpt = tf.keras.callbacks.ModelCheckpoint(args.working_dir + "/chkpts/chkpt-{epoch:02d}.h5",
+                                                     save_best_only=True,
+                                                     save_weights_only=True,
+                                                     verbose=1)
     lr_decay = tf.keras.callbacks.LearningRateScheduler(schedule=lambda epoch: args.lr * (args.lr_decay ** epoch))
 
     model.compile(optimizer=tf.keras.optimizers.Adam(lr=args.lr),
