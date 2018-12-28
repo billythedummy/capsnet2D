@@ -6,7 +6,7 @@ from capsnet_model.caps_layer import CapsLayer2D
 
 from utils.to_tfrecord import parse_fn_caps_tfrecord
 
-import time
+from utils.colab_utils import GDriveCheckpointer
 
 def load_data(tfrecordpath):
     x_train = np.ones([1, 255, 255, 3])
@@ -58,12 +58,23 @@ def train_generator(x, y, batch_size):
 def train(model, data, args):
     #(x_train, y_train), (x_test, y_test) = data
 
-    tb = tf.keras.callbacks.TensorBoard(log_dir="./tb-logs", batch_size=args.batch_size) #args.working_dir + 
+    tb = tf.keras.callbacks.TensorBoard(log_dir=args.working_dir + "/tb-logs", batch_size=args.batch_size) 
 
-    checkpt = tf.keras.callbacks.ModelCheckpoint("./chkpts/chkpt-{epoch:02d}.h5", #args.working_dir + 
-                                                 save_best_only=True,
-                                                 save_weights_only=True,
-                                                 verbose=1)
+    if args.on_colab:
+        def compare(best, new):
+            return best.losses['val_acc'] < new.losses['val_acc']
+
+        def path(new):
+            if new.losses['val_acc'] > 0.8:
+                return 'chkpt.h5'
+            
+        checkpt = GDriveCheckpointer(compare, path)
+
+    else:
+        checkpt = tf.keras.callbacks.ModelCheckpoint(args.working_dir + "/chkpts/chkpt-{epoch:02d}.h5",
+                                                     save_best_only=True,
+                                                     save_weights_only=True,
+                                                     verbose=1)
     lr_decay = tf.keras.callbacks.LearningRateScheduler(schedule=lambda epoch: args.lr * (args.lr_decay ** epoch))
 
     model.compile(optimizer=tf.keras.optimizers.Adam(lr=args.lr),
@@ -106,6 +117,7 @@ if __name__ == "__main__":
     parser.add_argument("--from_saved", default=0, type=int)
     parser.add_argument("--working_dir", default="../capsnet_data", type=str)
     parser.add_argument("--train_path", default="data/tfrecord/train.tfrecords", type=str)
+    parser.add_argument("--on_colab", default=0, type=int)
     
     args = parser.parse_args()
 
@@ -116,9 +128,9 @@ if __name__ == "__main__":
 
     if args.from_chkpt or args.from_saved:
         if args.from_chkpt:
-            #chkpts = glob.glob(args.working_dir + "/chkpts/chkpt-*.h5")
+            chkpts = glob.glob(args.working_dir + "/chkpts/chkpt-*.h5")
             #for colab
-            chkpts = glob.glob("./chkpt-*.h5")
+            #chkpts = glob.glob("./chkpt-*.h5")
         else:
             chkpts = glob.glob(args.working_dir + "/trained_model.h5")
         if len(chkpts) > 0:
