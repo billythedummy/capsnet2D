@@ -20,7 +20,32 @@ def to_capsule(csv_row, img):
     x = linear_map(c[0], 0, img.shape[1])
     y = linear_map(c[1], 0, img.shape[0])
     return np.array([x, y, w, h, phi, theta])
-    
+
+def to_drawable(capsule, img):
+    x = capsule_unmap(capsule[0], 0, img.shape[1])
+    y = capsule_unmap(capsule[1], 0, img.shape[0])
+    w = capsule_unmap(capsule[2], 0, img.shape[1])
+    h = capsule_unmap(capsule[3], 0, img.shape[0])
+    phi = angle_unmap(capsule[4])
+    theta = angle_unmap(capsule[5])
+    d1 = np.array([np.cos(np.radians(phi)), np.sin(np.radians(phi))])
+    scale = np.linalg.norm(d1)
+    d1 = d1 / scale
+    #i fukt up, phi isnt enough to capture the pose
+    d2 = np.array([-d1[1], d1[0]])
+    d1 = w * d1 * 0.5
+    d2 = h * d2 * 0.5
+    center = np.array([x, y])
+    v1 = np.round(center - d1 + d2).astype(int)
+    v2 = np.round(center + d1 + d2).astype(int)
+    v3 = np.round(center + d1 - d2).astype(int)
+    v4 = np.round(center - d1 - d2).astype(int)
+    vertices = np.vstack((v1, v2, v3, v4))
+    mins = np.zeros(vertices.shape, dtype=int)
+    maxs = np.array([img.shape[1], img.shape[0]], dtype=int)
+    maxs = np.tile(maxs, (4, 1))
+    vertices = np.minimum(maxs, np.maximum(mins, vertices))
+    return vertices, theta
 
 def signed_area(xi, yi, xiplus1, yiplus1):
     elems = xi * yiplus1 - xiplus1 * yi
@@ -84,9 +109,15 @@ def get_phi(ave_h, ave_v, ave_h_norm, ave_v_norm):
 def angle_map(deg):
     return linear_map(deg, -90.0, 90.0)
 
+def capsule_unmap(prop, conv_min, conv_max):
+    return linear_map(prop, -1.0, 1.0, conv_min, conv_max)
+
+def angle_unmap(prop):
+    return capsule_unmap(prop, -90.0, 90.0)
+
 def linear_map(val, val_min, val_max, conv_min=-1.0, conv_max=1.0):
-    val_range = float(val_max - val_min)
-    conv_range = float(conv_max - conv_min)
+    val_range = np.float32(val_max - val_min)
+    conv_range = np.float32(conv_max - conv_min)
     return ((val - val_min) / val_range) * conv_range + conv_min
     
 
