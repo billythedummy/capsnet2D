@@ -14,8 +14,6 @@ def load_data(tfrecordpath):
     return (x_train, y_train), (x_test, y_test)
 
 def weighted_vec_loss(y_true, y_pred):
-    #use tf.keras.backend.int_shape for var dimensions known at compile time
-    #use tf.shape for var dimensions known at run time (e.g. batch size)
     n_classes = tf.keras.backend.int_shape(y_pred)[-2] - 1
     y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
     y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
@@ -25,7 +23,6 @@ def weighted_vec_loss(y_true, y_pred):
     y_bg_mag = tf.sqrt(tf.reduce_sum(tf.square(y_bg), -1)) 
     y_pred_bg_mag = tf.sqrt(tf.reduce_sum(tf.square(y_pred_bg), -1))
     bg_ones = tf.ones(tf.shape(y_bg_mag)) #[None, h, w, 1]
-    #bg_loss = tf.abs(y_bg_mag - y_pred_bg_mag)
     #binary cross entropy for background
     bg_loss = -(tf.multiply(y_bg_mag, tf.log(y_pred_bg_mag))
                 + tf.multiply(bg_ones - y_bg_mag, tf.log(bg_ones - y_pred_bg_mag)))
@@ -35,8 +32,10 @@ def weighted_vec_loss(y_true, y_pred):
     y_classes_mag = tf.sqrt(tf.reduce_sum(tf.square(y_classes), -1))
     vec_diff = squash(y_classes - y_pred_classes)
     class_norm = tf.sqrt(tf.reduce_sum(tf.square(vec_diff), -1))
-    class_ones = tf.ones(tf.shape(class_norm))
-    class_loss = -(tf.multiply(y_classes_mag, tf.log(class_ones - class_norm))
+    class_ones = tf.ones(tf.shape(class_norm)) #[None, h, w, n_classes, caps_dim]
+    length = tf.keras.backend.int_shape(y_pred)[1] * tf.keras.backend.int_shape(y_pred)[2] 
+    #log loss of vec differences for class channels
+    class_loss = -(length * tf.multiply(y_classes_mag, tf.log(class_ones - class_norm)) #weigh pixels with actual ground truth capsules more heavily
                 + tf.multiply(class_ones - y_classes_mag, tf.log(class_ones - class_norm)))
     
     class_loss = tf.reduce_sum(class_loss)
