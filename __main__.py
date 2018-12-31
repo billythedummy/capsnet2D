@@ -6,40 +6,43 @@ from capsnet_model.caps_layer import squash
 
 from utils.to_tfrecord import parse_fn_caps_tfrecord
 
-def load_data(tfrecordpath):
-    x_train = np.ones([1, 255, 255, 3])
-    y_train = np.zeros([1, 255, 255, 2, 6])
-    x_test = np.ones([1, 255, 255, 3])
-    y_test = np.zeros([1, 255, 255, 2, 6])
-    return (x_train, y_train), (x_test, y_test)
-
 def weighted_vec_loss(y_true, y_pred):
     n_classes = tf.keras.backend.int_shape(y_pred)[-2] - 1
     y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
     y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
 
 
-    #background only uses magnitude of vectors for comparison
-    y_bg_mag = tf.sqrt(tf.reduce_sum(tf.square(y_bg), -1)) 
-    y_pred_bg_mag = tf.sqrt(tf.reduce_sum(tf.square(y_pred_bg), -1))
-    bg_ones = tf.ones(tf.shape(y_bg_mag)) #[None, h, w, 1]
+    #background only uses dimension[0] probability for comparison
+    #log loss for background classification error
+    y_bg_prob =  #1 or 0
+    y_pred_bg_prob = 
+    bg_ones = tf.ones(tf.shape(y_bg_prob)) #[None, h, w, 1]
     #binary cross entropy for background
-    bg_loss = -(tf.multiply(y_bg_mag, tf.log(y_pred_bg_mag))
-                + tf.multiply(bg_ones - y_bg_mag, tf.log(bg_ones - y_pred_bg_mag)))
+    bg_loss = -(tf.multiply(y_bg_prob, tf.log(y_pred_bg_prob))
+                + tf.multiply(bg_ones - y_bg_prob, tf.log(bg_ones - y_pred_bg_prob)))
     bg_loss = tf.reduce_sum(bg_loss)
 
-    #classes uses both magnitude and direction so magnitude of vector diff
-    y_classes_mag = tf.sqrt(tf.reduce_sum(tf.square(y_classes), -1))
-    vec_diff = squash(y_classes - y_pred_classes)
-    class_norm = tf.sqrt(tf.reduce_sum(tf.square(vec_diff), -1))
-    class_ones = tf.ones(tf.shape(class_norm)) #[None, h, w, n_classes, caps_dim]
-    length = tf.keras.backend.int_shape(y_pred)[1] * tf.keras.backend.int_shape(y_pred)[2] 
-    #log loss of vec differences for class channels
-    class_loss = -(length * tf.multiply(y_classes_mag, tf.log(class_ones - class_norm)) #weigh pixels with actual ground truth capsules more heavily
-                + tf.multiply(class_ones - y_classes_mag, tf.log(class_ones - class_norm)))
+    #classes uses both probability for classifiation error
+    #and vector difference for regression error
+    #length = tf.keras.backend.int_shape(y_pred)[1] * tf.keras.backend.int_shape(y_pred)[2] #For scaling purposes
+
+    #log loss for classification error
+    y_classes_prob = #1 or 0
+    y_pred_classes_prob =
+    class_prob_ones = tf.ones(tf.shape(y_classes_prob))
+    class_loss = -(tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob)) #weigh pixels with actual ground truth capsules more heavily
+                + tf.multiply(class_prob_ones - y_classes_mag, tf.log(class_prob_ones - y_pred_classes_prob)))
     
-    class_loss = tf.reduce_sum(class_loss)
-    loss = 0.6 * class_loss + 0.4 * bg_loss #weigh background less
+    #log of magnitude of squashed vector difference for regression error
+    y_classes =
+    y_pred_classes = 
+    vec_diff = squash(y_classes - y_pred_classes)
+    vec_diff_norm = tf.sqrt(tf.reduce_sum(tf.square(vec_diff), -1))
+    vec_diff_ones = tf.ones(tf.shape(vec_diff_norm)) #[None, h, w, n_classes, caps_dim]
+    regr_loss = -tf.log(vec_diff_ones - vec_diff_norm) #we want the vec diff to be 0
+    
+    regr_loss = tf.reduce_sum(regr_loss)
+    loss = class_loss + regr_loss + bg_loss #equal weighting
     #print(loss)
     return loss
 

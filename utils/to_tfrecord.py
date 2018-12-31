@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import csv
 from PIL import Image
-from utils.to_capsule import to_capsule, linear_map
+from utils.to_capsule import to_capsule, linear_map, capsule_unmap
 import glob
 import os
 
@@ -10,7 +10,7 @@ def to_tensors(directory, name,
               img_format="jpg",
               out_width=None,
               out_height=None,
-              caps_dim=6):
+              caps_dim=5):
     img = Image.open(directory + "/" + name + "." + img_format)
     #rgba to rgb conversion
     #img.load()
@@ -27,41 +27,43 @@ def to_tensors(directory, name,
     with open(csv_file, "rb") as csv_f:
         reader = csv.reader(csv_f, delimiter=",")
         capsules = []
+        x_s = []
+        y_s = []
         for row in reader:
-            capsules.append(to_capsule(row, img_np))
+            cap, x, y = to_capsule(row, img_np)
+            assert cap.shape[0] == caps_dim, "Caps dim of caps returned by to_capsule does not match specified"
+            capsules.append(cap)
+            x_s.append(x)
+            y_s.append(y)
     if out_width != img_np.shape[1] or out_height != img_np.shape[0]:
         img = img.resize((out_width, out_height))
         img_np = np.array(img)
     #print capsules
-    caps_channel = create_capsule_channel(img_np, capsules, caps_dim)
+    caps_channel = create_capsule_channel(img_np, capsules, caps_dim, x_s, y_s)
     bg_channel = create_background_channel([caps_channel], caps_dim)
     caps_channel = np.expand_dims(caps_channel, -2)
     bg_channel = np.expand_dims(bg_channel, -2)
     target_tensor = np.concatenate((caps_channel, bg_channel), axis=-2)
     return img_np.astype(np.float32), target_tensor.astype(np.float32)
 
-def create_capsule_channel(img_tensor, capsules, caps_dim):
+def create_capsule_channel(img_tensor, capsules, caps_dim, x_s, y_s):
     shape = np.array(img_tensor.shape[:2])
     shape = np.append(shape, caps_dim)
     res = np.zeros(shape)
-    for capsule in capsules:
-        x = int(np.round(linear_map(capsule[0], -1.0, 1.0, 0, 1.0) * shape[1]))
-        y = int(np.round(linear_map(capsule[1], -1.0, 1.0, 0, 1.0) * shape[0]))
+    for i in range(len(capsules)):
+        capsule = capsules[i]
+        x = int(np.round(capsule_unmap(x_s[i], 0, img_tensor.shape[1])))
+        y = int(np.round(capsule_unmap(y_s[i], 0, img_tensor.shape[0])))
         res[y, x] = capsule
     return res
 
 def create_background_channel(capsule_channels, caps_dim):
     shape = capsule_channels[0].shape
     res = np.ones(shape)
-    res /= caps_dim
+    #res /= np.sqrt(caps_dim)
     for caps_channel in capsule_channels:
         res[np.nonzero(caps_channel)] = 0
     return res
-
-def normalize_capsule(vectors, axis=-1):
-    squared_norm = np.sum(np.square(vectors), axis, keepdims=True)
-    scale = 1 / (np.sqrt(squared_norm) + np.finfo(np.float32).eps)
-    return scale * vectors
 
 def parse_fn_caps_tfrecord(example_proto):
     features = {'height': tf.FixedLenFeature((), tf.int64),
@@ -90,7 +92,7 @@ def _int64_feature(value):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
 
 def write_dir(dirname, tf_record_name,
-              caps_dim=6,
+              caps_dim=5,
               n_classes=1,
               out_width=None,
               out_height=None):

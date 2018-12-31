@@ -1,5 +1,8 @@
 import numpy as np
 
+SCALE_MIN = 0.0
+SCALE_MAX = 1.0
+
 def to_capsule(csv_row, img):
     csv_row = np.array(csv_row, dtype=np.float32)
     x1, y1, x2, y2, x3, y3, x4, y4, theta = csv_row
@@ -19,11 +22,9 @@ def to_capsule(csv_row, img):
     theta = angle_map(theta)
     x = linear_map(c[0], 0, img.shape[1])
     y = linear_map(c[1], 0, img.shape[0])
-    return np.array([x, y, w, h, phi, theta])
+    return np.array([1.0, w, h, phi, theta]), x, y #x y encoded by linear map
 
-def to_drawable(capsule, img):
-    x = capsule_unmap(capsule[0], 0, img.shape[1])
-    y = capsule_unmap(capsule[1], 0, img.shape[0])
+def to_drawable(capsule, img, x, y):
     w = capsule_unmap(capsule[2], 0, img.shape[1])
     h = capsule_unmap(capsule[3], 0, img.shape[0])
     phi = angle_unmap(capsule[4])
@@ -110,12 +111,12 @@ def angle_map(deg):
     return linear_map(deg, -90.0, 90.0)
 
 def capsule_unmap(prop, conv_min, conv_max):
-    return linear_map(prop, -1.0, 1.0, conv_min, conv_max)
+    return linear_map(prop, SCALE_MIN, SCALE_MAX, conv_min, conv_max)
 
 def angle_unmap(prop):
     return capsule_unmap(prop, -90.0, 90.0)
 
-def linear_map(val, val_min, val_max, conv_min=-1.0, conv_max=1.0):
+def linear_map(val, val_min, val_max, conv_min=SCALE_MIN, conv_max=SCALE_MAX):
     val_range = np.float32(val_max - val_min)
     conv_range = np.float32(conv_max - conv_min)
     return ((val - val_min) / val_range) * conv_range + conv_min

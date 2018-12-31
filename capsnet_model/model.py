@@ -17,15 +17,15 @@ def CapsNet(input_shape=(255, 255, 3),
     bn2 = tf.keras.layers.BatchNormalization(name="bn2")(conv2)
     relu2 = tf.keras.layers.Activation('relu', name="relu2")(bn2)
 
-    conv3 = tf.keras.layers.SeparableConvolution2D(24, (19, 19), padding="same", name="conv3_19x19x24")(relu2)
+    conv3 = tf.keras.layers.SeparableConvolution2D(22, (19, 19), padding="same", name="conv3_19x19x24")(relu2)
     bn3 = tf.keras.layers.BatchNormalization(name="bn3")(conv3)
     relu3 = tf.keras.layers.Activation('relu', name="relu3")(bn3)
 
     concat = tf.keras.layers.concatenate([relu1, relu2, relu3], axis=-1, name="Channel_Concat")
 
-    reshape = tf.keras.layers.Reshape((input_shape[0], input_shape[1], 7, 6), name="Capsule_Reshape")(concat)
+    reshape = tf.keras.layers.Reshape((input_shape[0], input_shape[1], 8, 5), name="Capsule_Reshape")(concat)
 
-    capsa = CapsLayer2D(7, batch_size=batch_size, n_routings=n_routings, name="Capsule_Layer_7")(reshape)
+    capsa = CapsLayer2D(4, batch_size=batch_size, n_routings=n_routings, name="Capsule_Layer_7")(reshape)
 
     capsb = CapsLayer2D(n_class + 1, batch_size=batch_size, n_routings=n_routings, last=True, name="Final_Capsules")(capsa)
 

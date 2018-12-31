@@ -115,6 +115,6 @@ def squash(s, axis=-1, epsilon=1e-7, name=None):
 
 def normalize_capsules(vectors, axis=-1, epsilon=1e-7, name=None):
     #for the last layer
-    #so each dimension is -1.0 to 1.0
+    #so each dimension has max magnitude of 1.0
     return (vectors + epsilon) / (1. + tf.abs(vectors))
     
