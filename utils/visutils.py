@@ -10,16 +10,6 @@ colors = ["red", "blue"]
 def draw_on(imgs, capsules, ax, limit=None): #both numpy arrays
     for i in range(3): #batch, height, width
         assert imgs.shape[i] == capsules.shape[i], "Shapes [" + str(imgs.shape[i]) +"], [" + str(capsules.shape[i]) + "] do not match"
-    #print capsules
-    #capsules = capsules[:,:,:,:-1,:] #last channel is background channel
-    #bg = capsules[:,:,:,-1:,:]
-    #caps_dim = capsules.shape[-1]
-    #max_squared_norm = np.float32(caps_dim)
-    #bg_squared_norm = np.sum(np.square(bg), axis=-1)
-    #capsules_squared_norm = np.sum(np.square(capsules), axis=-1)
-    #confident = np.where((capsules_squared_norm / max_squared_norm) > 0.00575, #0.5^2
-                         #1, 0)
-    #confident = np.where(bg_squared_norm < 0.00000005, 1, 0)
     caps_prob = capsules[:,:,:,:-1,0] #last channel is bg, first dim is probability
     confident = np.where(caps_prob > 0.5, 1, 0)
     indices = np.nonzero(confident)

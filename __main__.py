@@ -14,8 +14,8 @@ def weighted_vec_loss(y_true, y_pred):
 
     #background only uses dimension[0] probability for comparison
     #log loss for background classification error
-    y_bg_prob =  #1 or 0
-    y_pred_bg_prob = 
+    y_bg_prob = y_bg[:,:,:,-1,0]  #1 or 0
+    y_pred_bg_prob = y_pred_bg[:,:,:,-1,0]
     bg_ones = tf.ones(tf.shape(y_bg_prob)) #[None, h, w, 1]
     #binary cross entropy for background
     bg_loss = -(tf.multiply(y_bg_prob, tf.log(y_pred_bg_prob))
@@ -27,16 +27,16 @@ def weighted_vec_loss(y_true, y_pred):
     #length = tf.keras.backend.int_shape(y_pred)[1] * tf.keras.backend.int_shape(y_pred)[2] #For scaling purposes
 
     #log loss for classification error
-    y_classes_prob = #1 or 0
-    y_pred_classes_prob =
+    y_classes_prob = y_classes[:,:,:,:,0] #1 or 0
+    y_pred_classes_prob = y_pred_classes[:,:,:,:,0]
     class_prob_ones = tf.ones(tf.shape(y_classes_prob))
-    class_loss = -(tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob)) #weigh pixels with actual ground truth capsules more heavily
+    class_loss = -(tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob))
                 + tf.multiply(class_prob_ones - y_classes_mag, tf.log(class_prob_ones - y_pred_classes_prob)))
     
     #log of magnitude of squashed vector difference for regression error
-    y_classes =
-    y_pred_classes = 
-    vec_diff = squash(y_classes - y_pred_classes)
+    y_classes_vec = y_classes[:,:,:,:,1:]
+    y_pred_classes_vec = y_pred_classes[:,:,:,:,1:]
+    vec_diff = squash(y_classes_vec - y_pred_classes_vec)
     vec_diff_norm = tf.sqrt(tf.reduce_sum(tf.square(vec_diff), -1))
     vec_diff_ones = tf.ones(tf.shape(vec_diff_norm)) #[None, h, w, n_classes, caps_dim]
     regr_loss = -tf.log(vec_diff_ones - vec_diff_norm) #we want the vec diff to be 0
