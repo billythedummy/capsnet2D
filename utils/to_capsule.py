@@ -25,10 +25,11 @@ def to_capsule(csv_row, img):
     return np.array([1.0, w, h, phi, theta]), x, y #x y encoded by linear map
 
 def to_drawable(capsule, img, x, y):
-    w = capsule_unmap(capsule[2], 0, img.shape[1])
-    h = capsule_unmap(capsule[3], 0, img.shape[0])
-    phi = angle_unmap(capsule[4])
-    theta = angle_unmap(capsule[5])
+    w = capsule_unmap(capsule[1], 0, img.shape[1])
+    h = capsule_unmap(capsule[2], 0, img.shape[0])
+    phi = angle_unmap(capsule[3])
+    theta = angle_unmap(capsule[4])
+    print w, h, phi, theta
     d1 = np.array([np.cos(np.radians(phi)), np.sin(np.radians(phi))])
     scale = np.linalg.norm(d1)
     d1 = d1 / scale

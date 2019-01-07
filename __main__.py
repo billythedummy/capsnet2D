@@ -7,6 +7,8 @@ from capsnet_model.caps_layer import squash
 from utils.to_tfrecord import parse_fn_caps_tfrecord
 
 def weighted_vec_loss(y_true, y_pred):
+    scale = tf.keras.backend.int_shape(y_pred)[1] * tf.keras.backend.int_shape(y_pred)[2] #For scaling purposes
+
     n_classes = tf.keras.backend.int_shape(y_pred)[-2] - 1
     y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
     y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
@@ -14,17 +16,17 @@ def weighted_vec_loss(y_true, y_pred):
 
     #background only uses dimension[0] probability for comparison
     #log loss for background classification error
-    y_bg_prob = y_bg[:,:,:,-1,0]  #1 or 0
-    y_pred_bg_prob = y_pred_bg[:,:,:,-1,0]
-    bg_ones = tf.ones(tf.shape(y_bg_prob)) #[None, h, w, 1]
+    #y_bg_prob = y_bg[:,:,:,:,0]  #1 or 0
+    #y_pred_bg_prob = y_pred_bg[:,:,:,:,0]
+    #bg_ones = tf.ones(tf.shape(y_bg_prob)) #[None, h, w, 1]
     #binary cross entropy for background
-    bg_loss = -(tf.multiply(y_bg_prob, tf.log(y_pred_bg_prob))
-                + tf.multiply(bg_ones - y_bg_prob, tf.log(bg_ones - y_pred_bg_prob)))
-    bg_loss = tf.reduce_sum(bg_loss)
+    #bg_loss = -(tf.multiply(y_bg_prob, tf.log(y_pred_bg_prob))
+                #+ tf.multiply(bg_ones - y_bg_prob, tf.log(bg_ones - y_pred_bg_prob)))
+    #bg_loss = tf.reduce_sum(bg_loss)
+    #bg_loss /= scale
 
     #classes uses both probability for classifiation error
     #and vector difference for regression error
-    #length = tf.keras.backend.int_shape(y_pred)[1] * tf.keras.backend.int_shape(y_pred)[2] #For scaling purposes
 
     #log loss for classification error
     y_classes_prob = y_classes[:,:,:,:,0] #1 or 0
@@ -32,17 +34,19 @@ def weighted_vec_loss(y_true, y_pred):
     class_prob_ones = tf.ones(tf.shape(y_classes_prob))
     class_loss = -(tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob))
                 + tf.multiply(class_prob_ones - y_classes_prob, tf.log(class_prob_ones - y_pred_classes_prob)))
+    class_loss = tf.reduce_sum(class_loss)
     
     #log of magnitude of squashed vector difference for regression error
     y_classes_vec = y_classes[:,:,:,:,1:]
     y_pred_classes_vec = y_pred_classes[:,:,:,:,1:]
-    vec_diff = squash(y_classes_vec - y_pred_classes_vec)
+    vec_diff = y_classes_vec - y_pred_classes_vec #squash
     vec_diff_norm = tf.sqrt(tf.reduce_sum(tf.square(vec_diff), -1))
-    vec_diff_ones = tf.ones(tf.shape(vec_diff_norm)) #[None, h, w, n_classes, caps_dim]
-    regr_loss = -tf.log(vec_diff_ones - vec_diff_norm) #we want the vec diff to be 0
+    #vec_diff_ones = tf.ones(tf.shape(vec_diff_norm)) #[None, h, w, n_classes, caps_dim]
+    #regr_loss = -tf.log(vec_diff_ones - vec_diff_norm) #we want the vec diff to be 0
+    vec_diff_norm = y_classes_prob * vec_diff_norm
+    regr_loss = tf.reduce_sum(vec_diff_norm)#tf.reduce_sum(regr_loss)
     
-    regr_loss = tf.reduce_sum(regr_loss)
-    loss = class_loss + regr_loss + bg_loss #equal weighting
+    loss = regr_loss + class_loss #equal weighting
     #print(loss)
     return loss
 
@@ -87,7 +91,9 @@ def train(model, args, data=None):
                             verbose=1)
     else: #for TFRecord
         training_set = tfrecord_generator(args.working_dir + "/" + args.train_path, args.batch_size)
-        eval_set = tfrecord_generator(args.working_dir + "/" + args.eval_path, 5) #bec I know i have 5 images in my eval set rn. Really gotta fix these hardcoded sample size bs
+        eval_set = tfrecord_generator(args.working_dir + "/" + args.eval_path, args.batch_size)
+        #bec I know i have 5 images in my eval set rn. Really gotta fix these hardcoded sample size bs
+        #but eval_set batch size must be equal to training set batch size bec capsule layer dimensions is hardcoded at init rn
         model.fit(training_set.make_one_shot_iterator(),
                   steps_per_epoch=max(1, int(20 / args.batch_size)), #lol shit how to determine dataset size from tfrecord file
                   callbacks=[tb, checkpt, lr_decay],
@@ -97,7 +103,7 @@ def train(model, args, data=None):
                   verbose=1)
 
     model.save_weights(args.working_dir + "/trained_model.h5")
-    print("Trained model saved to same directory!")
+    print("Trained model saved to working directory!")
 
     return model
                   
