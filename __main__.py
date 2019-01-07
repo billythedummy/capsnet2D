@@ -37,16 +37,16 @@ def weighted_vec_loss(y_true, y_pred):
     class_loss = tf.reduce_sum(class_loss)
     
     #norm of vector difference for regression error
-    y_classes_vec = y_classes[:,:,:,:,1:]
-    y_pred_classes_vec = y_pred_classes[:,:,:,:,1:]
-    vec_diff = y_classes_vec - y_pred_classes_vec #no more squash
-    vec_diff_norm = tf.sqrt(tf.reduce_sum(tf.square(vec_diff), -1))
-    #vec_diff_ones = tf.ones(tf.shape(vec_diff_norm)) #[None, h, w, n_classes, caps_dim]
-    #regr_loss = -tf.log(vec_diff_ones - vec_diff_norm) #we want the vec diff to be 0
-    vec_diff_norm = y_classes_prob * vec_diff_norm
-    regr_loss = tf.reduce_sum(vec_diff_norm)#tf.reduce_sum(regr_loss)
+    #y_classes_vec = y_classes[:,:,:,:,1:]
+    #y_pred_classes_vec = y_pred_classes[:,:,:,:,1:]
+    #vec_diff = y_classes_vec - y_pred_classes_vec #no more squash
+    #vec_diff_norm = tf.sqrt(tf.reduce_sum(tf.square(vec_diff), -1))
+    ##vec_diff_ones = tf.ones(tf.shape(vec_diff_norm)) #[None, h, w, n_classes, caps_dim]
+    ##regr_loss = -tf.log(vec_diff_ones - vec_diff_norm) #we want the vec diff to be 0
+    #vec_diff_norm = y_classes_prob * vec_diff_norm
+    #regr_loss = tf.reduce_sum(vec_diff_norm)#tf.reduce_sum(regr_loss)
     
-    loss = regr_loss * class_loss
+    loss = class_loss
     #print(loss)
     return loss
 
