@@ -13,40 +13,36 @@ def weighted_vec_loss(y_true, y_pred):
     y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
     y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
 
-
     #background only uses dimension[0] probability for comparison
-    #log loss for background classification error
-    #y_bg_prob = y_bg[:,:,:,:,0]  #1 or 0
-    #y_pred_bg_prob = y_pred_bg[:,:,:,:,0]
-    #bg_ones = tf.ones(tf.shape(y_bg_prob)) #[None, h, w, 1]
-    #binary cross entropy for background
-    #bg_loss = -(tf.multiply(y_bg_prob, tf.log(y_pred_bg_prob))
-                #+ tf.multiply(bg_ones - y_bg_prob, tf.log(bg_ones - y_pred_bg_prob)))
+    #weighted log/ BCE loss for background classification error
+    y_bg_prob = y_bg[:,:,:,:,0]  #1 or 0
+    y_pred_bg_prob = y_pred_bg[:,:,:,:,0]
+    bg_ones = tf.ones(tf.shape(y_bg_prob)) #[None, h, w, 1]
+    bg_loss = -(tf.multiply(y_bg_prob, tf.log(y_pred_bg_prob))
+                + scale * tf.multiply(bg_ones - y_bg_prob, tf.log(bg_ones - y_pred_bg_prob)))
     #bg_loss = tf.reduce_sum(bg_loss)
-    #bg_loss /= scale
 
     #classes uses both probability for classifiation error
     #and vector difference for regression error
 
-    #log loss for classification error
+    #weighted log/ BCE loss for classification error
     y_classes_prob = y_classes[:,:,:,:,0] #1 or 0
     y_pred_classes_prob = y_pred_classes[:,:,:,:,0]
     class_prob_ones = tf.ones(tf.shape(y_classes_prob))
-    class_loss = -tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob)) #(
-                #+ tf.multiply(class_prob_ones - y_classes_prob, tf.log(class_prob_ones - y_pred_classes_prob)))
+    class_loss = -(scale * tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob))
+                + tf.multiply(class_prob_ones - y_classes_prob, tf.log(class_prob_ones - y_pred_classes_prob)))
     #class_loss = tf.reduce_sum(class_loss)
     
-    #norm of vector difference for regression error
-    #y_classes_vec = y_classes[:,:,:,:,1:]
-    #y_pred_classes_vec = y_pred_classes[:,:,:,:,1:]
-    #vec_diff = y_classes_vec - y_pred_classes_vec #no more squash
-    #vec_diff_norm = tf.sqrt(tf.reduce_sum(tf.square(vec_diff), -1))
-    ##vec_diff_ones = tf.ones(tf.shape(vec_diff_norm)) #[None, h, w, n_classes, caps_dim]
-    ##regr_loss = -tf.log(vec_diff_ones - vec_diff_norm) #we want the vec diff to be 0
-    #vec_diff_norm = y_classes_prob * vec_diff_norm
-    #regr_loss = tf.reduce_sum(vec_diff_norm)#tf.reduce_sum(regr_loss)
+    #norm of vector difference/ MSE for regression error
+    y_classes_vec = y_classes[:,:,:,:,1:]
+    y_pred_classes_vec = y_pred_classes[:,:,:,:,1:]
+    vec_diff = y_classes_vec - y_pred_classes_vec 
+    vec_diff_squared = tf.reduce_sum(tf.square(vec_diff), -1)
+    ##vec_diff_norm = tf.sqrt(vec_diff_squared)
+    regr_loss = scale * y_classes_prob * vec_diff_squared
+    #regr_loss = tf.reduce_sum(vec_diff_norm)
     
-    loss = class_loss
+    loss = class_loss + regr_loss + bg_loss
     #print(loss)
     return loss
 
