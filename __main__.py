@@ -32,8 +32,8 @@ def weighted_vec_loss(y_true, y_pred):
     y_classes_prob = y_classes[:,:,:,:,0] #1 or 0
     y_pred_classes_prob = y_pred_classes[:,:,:,:,0]
     class_prob_ones = tf.ones(tf.shape(y_classes_prob))
-    class_loss = -(tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob))
-                + tf.multiply(class_prob_ones - y_classes_prob, tf.log(class_prob_ones - y_pred_classes_prob)))
+    class_loss = -tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob)) #(
+                #+ tf.multiply(class_prob_ones - y_classes_prob, tf.log(class_prob_ones - y_pred_classes_prob)))
     #class_loss = tf.reduce_sum(class_loss)
     
     #norm of vector difference for regression error
