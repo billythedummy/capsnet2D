@@ -29,7 +29,7 @@ def to_drawable(capsule, img, x, y):
     h = capsule_unmap(capsule[2], 0, img.shape[0])
     phi = angle_unmap(capsule[3])
     theta = angle_unmap(capsule[4])
-    print w, h, phi, theta
+    #print(w, h, phi, theta)
     d1 = np.array([np.cos(np.radians(phi)), np.sin(np.radians(phi))])
     scale = np.linalg.norm(d1)
     d1 = d1 / scale
