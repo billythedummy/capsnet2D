@@ -11,10 +11,10 @@ def draw_on(imgs, capsules, ax, limit=None): #both numpy arrays
     for i in range(3): #batch, height, width
         assert imgs.shape[i] == capsules.shape[i], "Shapes [" + str(imgs.shape[i]) +"], [" + str(capsules.shape[i]) + "] do not match"
     caps_prob = capsules[:,:,:,:-1,0] #last channel is bg, first dim is probability
-    confident = np.where(caps_prob > 0.5, 1, 0)
+    confident = np.where(caps_prob > 0.0001, 1, 0)
     indices = np.nonzero(confident)
     indices = np.array(indices).T
-    #print(indices.shape[0]) #how many confident
+    print(indices.shape[0]) #how many confident
     # dont need to change -1 index for now bec theres only 1 class at index 0
     x = np.empty(shape=(0, 5))
     y = np.empty(shape=(0, 5))
