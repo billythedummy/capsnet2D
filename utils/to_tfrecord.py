@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import csv
 from PIL import Image
-from to_capsule import to_capsule, linear_map, capsule_unmap
+from utils.to_capsule import to_capsule, linear_map, capsule_unmap
 import glob
 import os
 
