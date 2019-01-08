@@ -66,7 +66,7 @@ def train_generator(x, y, batch_size):
 def train(model, args, data=None):
     tb = tf.keras.callbacks.TensorBoard(log_dir=args.working_dir + "/tb-logs", batch_size=args.batch_size) 
 
-    checkpt = tf.keras.callbacks.ModelCheckpoint(args.working_dir + "/chkpts/chkpt-{epoch:02d}.h5",
+    checkpt = tf.keras.callbacks.ModelCheckpoint(args.working_dir + "/chkpts/chkpt-saved.h5", #after - {epoch:02d}
                                                  save_best_only=True, #True can only work if there is a validation/ test set
                                                  save_weights_only=True,
                                                  verbose=1)
