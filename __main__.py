@@ -91,7 +91,7 @@ def train(model, args, data=None):
         #bec I know i have 5 images in my eval set rn. Really gotta fix these hardcoded sample size bs
         #but eval_set batch size must be equal to training set batch size bec capsule layer dimensions is hardcoded at init rn
         model.fit(training_set.make_one_shot_iterator(),
-                  steps_per_epoch=max(1, int(20 / args.batch_size)), #lol shit how to determine dataset size from tfrecord file
+                  steps_per_epoch=max(1, int(60 / args.batch_size)), #lol shit how to determine dataset size from tfrecord file
                   callbacks=[tb, checkpt, lr_decay],
                   epochs=args.epochs,
                   validation_data=eval_set.make_one_shot_iterator(),
