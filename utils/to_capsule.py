@@ -103,10 +103,13 @@ def get_phi(ave_h, ave_v, ave_h_norm, ave_v_norm):
     phi_1 = np.arccos(dot_h / ave_h_norm)
     phi_2 = np.arccos(dot_v / ave_v_norm)
     deg = np.degrees((phi_1 + phi_2) / 2)
-    if ave_h[1] >= 0 and ave_v[0] <= 0:
-        return deg
-    else:
+    #if ave_h[1] >= 0 and ave_v[0] <= 0:
+        #return deg
+    #el
+    if ave_h[1] <= 0 and ave_v[0] >= 0:
         return -deg
+    else:
+        return deg
 
 def angle_map(deg):
     return linear_map(deg, -90.0, 90.0)

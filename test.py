@@ -40,7 +40,7 @@ if __name__ == "__main__":
             img_exp = np.expand_dims(img, axis=0)
             img_in = tf.convert_to_tensor(img_exp, dtype=tf.float32)
             capsules = model(img_in)
-            draw_on(img_exp, capsules.eval(), ax, limit=10)
+            draw_on(img_exp, capsules.eval(), ax, limit=None)
             plt.imshow(img)
             plt.show()
 
