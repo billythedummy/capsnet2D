@@ -74,7 +74,7 @@ def train(model, args, data=None):
     lr_decay = tf.keras.callbacks.LearningRateScheduler(schedule=lambda epoch: args.lr * (args.lr_decay ** epoch))
 
     model.compile(optimizer=tf.keras.optimizers.Adam(lr=args.lr),
-                  loss=tf.keras.losses.mean_squared_error, #weighted_vec_loss,
+                  loss=weighted_vec_loss, #tf.keras.losses.mean_squared_error,
                   metrics={'capsnet': 'accuracy'})
 
     if data is not None: #for local batches
