@@ -95,7 +95,7 @@ def train(model, args, data=None):
                   callbacks=[tb, checkpt, lr_decay],
                   epochs=args.epochs,
                   validation_data=eval_set.make_one_shot_iterator(),
-                  validation_steps=1,
+                  validation_steps=max(1, int(20 / args.batch_size)),
                   verbose=1)
 
     model.save_weights(args.working_dir + "/trained_model.h5")
