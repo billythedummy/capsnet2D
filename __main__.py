@@ -8,7 +8,7 @@ from utils.to_tfrecord import parse_fn_caps_tfrecord
 
 def weighted_vec_loss(y_true, y_pred):
     scale = tf.keras.backend.int_shape(y_pred)[1] * tf.keras.backend.int_shape(y_pred)[2] #For scaling purposes
-    scale_2 = tf.sqrt(scale)
+    scale_2 = tf.keras.backend.int_shape(y_pred)[1]
     
     n_classes = tf.keras.backend.int_shape(y_pred)[-2] - 1
     y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
