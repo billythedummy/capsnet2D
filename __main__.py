@@ -8,19 +8,20 @@ from utils.to_tfrecord import parse_fn_caps_tfrecord
 
 def weighted_vec_loss(y_true, y_pred):
     scale = tf.keras.backend.int_shape(y_pred)[1] * tf.keras.backend.int_shape(y_pred)[2] #For scaling purposes
-
+    scale_2 = tf.sqrt(scale)
+    
     n_classes = tf.keras.backend.int_shape(y_pred)[-2] - 1
     y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
     y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
 
     #background only uses dimension[0] probability for comparison
     #weighted log/ BCE loss for background classification error
-    y_bg_prob = y_bg[:,:,:,:,0]  #1 or 0
-    y_pred_bg_prob = y_pred_bg[:,:,:,:,0]
-    bg_ones = tf.ones(tf.shape(y_bg_prob)) #[None, h, w, 1]
-    bg_loss = -(tf.multiply(y_bg_prob, tf.log(y_pred_bg_prob))
-                + scale * tf.multiply(bg_ones - y_bg_prob, tf.log(bg_ones - y_pred_bg_prob)))
-    #bg_loss = tf.reduce_sum(bg_loss)
+    #y_bg_prob = y_bg[:,:,:,:,0]  #1 or 0
+    #y_pred_bg_prob = y_pred_bg[:,:,:,:,0]
+    #bg_ones = tf.ones(tf.shape(y_bg_prob)) #[None, h, w, 1]
+    #bg_loss = -(tf.multiply(y_bg_prob, tf.log(y_pred_bg_prob))
+                #+ scale * tf.multiply(bg_ones - y_bg_prob, tf.log(bg_ones - y_pred_bg_prob)))
+    ##bg_loss = tf.reduce_sum(bg_loss)
 
     #classes uses both probability for classifiation error
     #and vector difference for regression error
@@ -29,7 +30,7 @@ def weighted_vec_loss(y_true, y_pred):
     y_classes_prob = y_classes[:,:,:,:,0] #1 or 0
     y_pred_classes_prob = y_pred_classes[:,:,:,:,0]
     class_prob_ones = tf.ones(tf.shape(y_classes_prob))
-    class_loss = -(scale * tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob))
+    class_loss = -(scale_2 * tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob))
                 + tf.multiply(class_prob_ones - y_classes_prob, tf.log(class_prob_ones - y_pred_classes_prob)))
     #class_loss = tf.reduce_sum(class_loss)
     
@@ -42,7 +43,7 @@ def weighted_vec_loss(y_true, y_pred):
     regr_loss = scale * y_classes_prob * vec_diff_squared
     #regr_loss = tf.reduce_sum(vec_diff_norm)
     
-    loss = class_loss + regr_loss + bg_loss
+    loss = class_loss + regr_loss #+ bg_loss
     #print(loss)
     return loss
 
@@ -95,7 +96,7 @@ def train(model, args, data=None):
                   callbacks=[tb, checkpt, lr_decay],
                   epochs=args.epochs,
                   validation_data=eval_set.make_one_shot_iterator(),
-                  validation_steps=max(1, int(20 / args.batch_size)),
+                  validation_steps=1,
                   verbose=1)
 
     model.save_weights(args.working_dir + "/trained_model.h5")

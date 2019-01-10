@@ -1,5 +1,5 @@
 import numpy as np
-import tensorflow as tf #for .eval() call
+import tensorflow as tf 
 import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
@@ -7,39 +7,40 @@ from to_capsule import to_drawable
 
 colors = ["red", "blue"]
 
-def draw_on(imgs, capsules, ax, limit=None): #both numpy arrays
+def draw_on(imgs, capsules, ax, limit=5): #both numpy arrays
     for i in range(3): #batch, height, width
         assert imgs.shape[i] == capsules.shape[i], "Shapes [" + str(imgs.shape[i]) +"], [" + str(capsules.shape[i]) + "] do not match"
-    caps_prob = capsules[:,:,:,:-1,0] #last channel is bg, first dim is probability
-    confident = np.where(caps_prob > 0.475, 1, 0)
-    indices = np.nonzero(confident)
-    indices = np.array(indices).T
-    print(indices.shape[0]) #how many confident
+    caps_prob = np.copy(capsules[:,:,:,:-1,0]) #last channel is bg, first dim is probability
+    
+    #Loop here finds top `limit` number of probabilities' indices
+    indices = []
+    while len(indices) < limit:
+        confident = np.argmax(caps_prob)
+        confident = np.unravel_index(confident, caps_prob.shape)
+        indices.append(confident)
+        caps_prob[confident] = 0
+    
     # dont need to change -1 index for now bec theres only 1 class at index 0
     x = np.empty(shape=(0, 5))
     y = np.empty(shape=(0, 5))
     classes = np.array([], dtype=int)
     thetas = np.array([])
-    i = 0
     for index in indices:
-        if limit is None or i < limit:
-            caps = capsules[tuple(index)]
-            #print(caps)
-            img = imgs[index[0]]
-            vertices, theta = to_drawable(caps, img, index[2], index[1])
-            this_x = vertices[:,0]
-            this_x = np.append(this_x, vertices[0, 0]) #add x of first vertex as last so full rect gets drawn
-            this_x = np.reshape(this_x, (1, 5))
-            this_y = vertices[:,1]
-            this_y = np.append(this_y, vertices[0, 1]) #add y of first vertex as last so full rect gets drawn
-            this_y = np.reshape(this_y, (1, 5))
-            x = np.vstack((x, this_x))
-            y = np.vstack((y, this_y))
-            thetas = np.append(thetas, theta)
-            classes = np.append(classes, index[-1])
-        else:
-            break
-        i += 1
+        caps = capsules[tuple(index)]
+        #print(caps)
+        img = imgs[index[0]]
+        vertices, theta = to_drawable(caps, img, index[2], index[1])
+        this_x = vertices[:,0]
+        this_x = np.append(this_x, vertices[0, 0]) #add x of first vertex as last so full rect gets drawn
+        this_x = np.reshape(this_x, (1, 5))
+        this_y = vertices[:,1]
+        this_y = np.append(this_y, vertices[0, 1]) #add y of first vertex as last so full rect gets drawn
+        this_y = np.reshape(this_y, (1, 5))
+        x = np.vstack((x, this_x))
+        y = np.vstack((y, this_y))
+        thetas = np.append(thetas, theta)
+        classes = np.append(classes, index[-1])
+
     for j in range(x.shape[0]):
         x_list = x[j]
         y_list = y[j]
