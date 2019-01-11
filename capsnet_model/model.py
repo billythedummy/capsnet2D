@@ -3,10 +3,8 @@ from capsnet_model.caps_layer import CapsLayer2D
 
 def CapsNet(input_shape=(255, 255, 3),
             n_class=1,
-            n_routings=3,
-            batch_size=1):
+            n_routings=3):
 
-    in_name = "Input_Batch_size_" + str(batch_size)
     input_layer = tf.keras.layers.Input(shape=input_shape, name="input")
     
     conv1 = tf.keras.layers.SeparableConvolution2D(6,
@@ -38,19 +36,16 @@ def CapsNet(input_shape=(255, 255, 3),
                                       name="Capsule_Reshape")(concat)
 
     capsa = CapsLayer2D(10,
-                        batch_size=batch_size,
                         n_routings=n_routings,
                         caps_dim=3,
                         name="Capsule_Layer_7")(reshape)
 
     capsb = CapsLayer2D(5,
-                        batch_size=batch_size,
                         n_routings=n_routings,
                         caps_dim=4,
                         name="Capsule_Layer_")(capsa)
 
     capsc = CapsLayer2D(n_class + 1,
-                        batch_size=batch_size,
                         n_routings=n_routings,
                         caps_dim=5,
                         last=True,

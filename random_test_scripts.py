@@ -1,5 +1,20 @@
 if __name__ == "__main__":
+    # Testing model compilation and run through
+    from capsnet_model.model import CapsNet
+    import numpy as np
+    import tensorflow as tf
+    sess = tf.Session()
+    with sess.as_default():
+        model = CapsNet()
+        model.load_weights("../capsnet_data/trained_model.h5")
+        model.summary()
+        x = tf.convert_to_tensor(np.ones([4, 255, 255, 3]).astype(np.float32))
+        pred = model(x)
+        print pred.shape
+        print pred.eval().shape
+    
     # Testing visutils
+    '''
     from visutils import draw_on
     import matplotlib as mpl
     mpl.use('TkAgg')
@@ -20,7 +35,7 @@ if __name__ == "__main__":
         x = x.astype(np.uint8)
         plt.imshow(x)
         plt.show()
-    
+    '''
 
     '''
     #Loss function sanity check

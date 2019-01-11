@@ -3,7 +3,6 @@ import tensorflow as tf
 class CapsLayer2D(tf.keras.layers.Layer):
     def __init__(self,
                  n_caps,
-                 batch_size=1,
                  n_routings=3,
                  rows=None, #same as input by default
                  cols=None, #same as input by default
@@ -14,7 +13,6 @@ class CapsLayer2D(tf.keras.layers.Layer):
                  **kwargs):
         super(CapsLayer2D, self).__init__(**kwargs)
         self.n_caps = n_caps
-        self.batch_size = batch_size
         self.n_routings = n_routings
         self.rows = rows
         self.cols = cols
@@ -48,9 +46,10 @@ class CapsLayer2D(tf.keras.layers.Layer):
         weights = tf.expand_dims(weights, 0)
         weights = tf.expand_dims(weights, 0)
         #[1, 1, 1, n_caps, n_input_caps, input_caps_dim, caps_dim]
-        w_multiples = tf.constant(
-                    [self.batch_size, self.input_rows, self.input_cols,
+        w_multiples = tf.Variable(
+                    [0, self.input_rows, self.input_cols,
                      1, 1, 1, 1])
+        w_multiples = tf.assign(w_multiples[0], tf.shape(inputs)[0])
         weights = tf.tile(weights, w_multiples)
         #[None, rows, cols, n_caps, n_input_caps, input_caps_dim, caps_dim]
         #last 4 dimensions is the actual weights
@@ -74,11 +73,13 @@ class CapsLayer2D(tf.keras.layers.Layer):
         #The n_input_caps dimension is removed by having a weighted sum of the
         #vectors to determine the new capsule, determined by routing by agreement
 
-        b = tf.nn.softmax(tf.zeros([self.batch_size,
-                                    self.input_rows,
-                                    self.input_cols,
-                                    self.n_caps,
-                                    self.n_input_caps]))
+        softmax_shape = tf.Variable([0,
+                                     self.input_rows,
+                                     self.input_cols,
+                                     self.n_caps,
+                                     self.n_input_caps])
+        softmax_shape = tf.assign(softmax_shape[0], tf.shape(inputs)[0])
+        b = tf.nn.softmax(tf.zeros(softmax_shape))
         #[None, rows, cols, n_caps, n_input_caps]
         for i in range(self.n_routings - 1):
             b_tiled = tf.expand_dims(b, -1)

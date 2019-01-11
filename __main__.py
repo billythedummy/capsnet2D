@@ -125,7 +125,7 @@ if __name__ == "__main__":
     if args.from_chkpt and args.from_saved:
         raise Exception("Error: You can only choose either from_chkpt or from_saved")
 
-    model = CapsNet(batch_size=args.batch_size)
+    model = CapsNet()
 
     if args.from_chkpt or args.from_saved:
         if args.from_chkpt:
