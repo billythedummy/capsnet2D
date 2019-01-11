@@ -10,7 +10,7 @@ colors = ["red", "blue"]
 def draw_on(imgs, capsules, ax, limit=5): #both numpy arrays
     for i in range(3): #batch, height, width
         assert imgs.shape[i] == capsules.shape[i], "Shapes [" + str(imgs.shape[i]) +"], [" + str(capsules.shape[i]) + "] do not match"
-    caps_prob = np.copy(capsules[:,:,:,:,0]) first dim is probability
+    caps_prob = np.copy(capsules[:,:,:,:,0]) #first dim is probability
     
     #Loop here finds top `limit` number of probabilities' indices
     indices = []

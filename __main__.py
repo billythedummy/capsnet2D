@@ -22,6 +22,7 @@ def weighted_vec_loss(y_true, y_pred):
     class_prob_ones = tf.ones(tf.shape(y_classes_prob))
     class_loss = -(weight * tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob))
                 + tf.multiply(class_prob_ones - y_classes_prob, tf.log(class_prob_ones - y_pred_classes_prob)))
+    class_loss = tf.reduce_mean(class_loss)
     
     #norm of vector difference/ MSE for regression error
     y_classes_vec = y_true[:,:,:,:,1:]
@@ -30,6 +31,7 @@ def weighted_vec_loss(y_true, y_pred):
     vec_diff_squared = tf.reduce_sum(tf.square(vec_diff), -1)
     ##vec_diff_norm = tf.sqrt(vec_diff_squared)
     regr_loss = weight * y_classes_prob * vec_diff_squared #so 0 for background pixels
+    regr_loss = tf.reduce_mean(regr_loss)
     
     loss = class_loss + regr_loss
     #print(loss)
