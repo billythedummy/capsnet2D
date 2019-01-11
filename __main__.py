@@ -14,15 +14,6 @@ def weighted_vec_loss(y_true, y_pred):
     y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
     y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
 
-    #background only uses dimension[0] probability for comparison
-    #weighted log/ BCE loss for background classification error
-    #y_bg_prob = y_bg[:,:,:,:,0]  #1 or 0
-    #y_pred_bg_prob = y_pred_bg[:,:,:,:,0]
-    #bg_ones = tf.ones(tf.shape(y_bg_prob)) #[None, h, w, 1]
-    #bg_loss = -(tf.multiply(y_bg_prob, tf.log(y_pred_bg_prob))
-                #+ scale * tf.multiply(bg_ones - y_bg_prob, tf.log(bg_ones - y_pred_bg_prob)))
-    ##bg_loss = tf.reduce_sum(bg_loss)
-
     #classes uses both probability for classifiation error
     #and vector difference for regression error
 

@@ -3,15 +3,22 @@ if __name__ == "__main__":
     from capsnet_model.model import CapsNet
     import numpy as np
     import tensorflow as tf
+    import time
     sess = tf.Session()
     with sess.as_default():
         model = CapsNet()
         model.load_weights("../capsnet_data/trained_model.h5")
         model.summary()
-        x = tf.convert_to_tensor(np.ones([4, 255, 255, 3]).astype(np.float32))
-        pred = model(x)
-        print pred.shape
-        print pred.eval().shape
+
+        for i in range(5):
+            x = tf.convert_to_tensor(np.ones([1, 255, 255, 3]).astype(np.float32))
+            start = time.time()
+            pred = model(x)
+            print("Inference took: " + str(time.time() - start) + "s")
+            
+        print(pred.shape)
+        print(pred.eval())
+        print(pred.eval().shape)
     
     # Testing visutils
     '''
