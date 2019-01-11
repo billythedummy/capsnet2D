@@ -7,34 +7,31 @@ from capsnet_model.caps_layer import squash
 from utils.to_tfrecord import parse_fn_caps_tfrecord
 
 def weighted_vec_loss(y_true, y_pred):
-    scale = tf.keras.backend.int_shape(y_pred)[1] * tf.keras.backend.int_shape(y_pred)[2] #For scaling purposes
-    scale_2 = tf.keras.backend.int_shape(y_pred)[1]
+    weight = 1463716.6470588236
     
-    n_classes = tf.keras.backend.int_shape(y_pred)[-2] - 1
-    y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
-    y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
+    #n_classes = tf.keras.backend.int_shape(y_pred)[-2]
+    #y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
+    #y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
 
-    #classes uses both probability for classifiation error
+    #probability for classifiation error
     #and vector difference for regression error
 
     #weighted log/ BCE loss for classification error
-    y_classes_prob = y_classes[:,:,:,:,0] #1 or 0
-    y_pred_classes_prob = y_pred_classes[:,:,:,:,0]
+    y_classes_prob = y_true[:,:,:,:,0] #1 or 0
+    y_pred_classes_prob = y_pred[:,:,:,:,0]
     class_prob_ones = tf.ones(tf.shape(y_classes_prob))
-    class_loss = -(scale_2 * tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob))
+    class_loss = -(weight * tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob))
                 + tf.multiply(class_prob_ones - y_classes_prob, tf.log(class_prob_ones - y_pred_classes_prob)))
-    #class_loss = tf.reduce_sum(class_loss)
     
     #norm of vector difference/ MSE for regression error
-    y_classes_vec = y_classes[:,:,:,:,1:]
-    y_pred_classes_vec = y_pred_classes[:,:,:,:,1:]
+    y_classes_vec = y_true[:,:,:,:,1:]
+    y_pred_classes_vec = y_pred[:,:,:,:,1:]
     vec_diff = y_classes_vec - y_pred_classes_vec 
     vec_diff_squared = tf.reduce_sum(tf.square(vec_diff), -1)
     ##vec_diff_norm = tf.sqrt(vec_diff_squared)
-    regr_loss = scale * y_classes_prob * vec_diff_squared
-    #regr_loss = tf.reduce_sum(vec_diff_norm)
+    regr_loss = weight * y_classes_prob * vec_diff_squared #so 0 for background pixels
     
-    loss = class_loss + regr_loss #+ bg_loss
+    loss = class_loss + regr_loss
     #print(loss)
     return loss
 
@@ -133,25 +130,3 @@ if __name__ == "__main__":
     model.summary()
 
     train(model=model, args=args, data=None)
-
-    '''
-    x_train = np.ones([2, 255, 255, 3])
-    y_train = np.zeros([2, 255, 255, 2, 6])
-    x_test = np.ones([1, 255, 255, 3])
-    y_test = np.zeros([1, 255, 255, 2, 6])
-    data = (x_train, y_train), (x_test, y_test)
-    
-    sess = tf.Session()
-    with sess.as_default():
-        t1 = np.ones([56, 6], dtype=np.float32)
-        t2 = np.ones([28, 6], dtype=np.float32)
-        t2 = np.concatenate((np.zeros([28, 6], dtype=np.float32), t2))
-        t1 = np.expand_dims(t1, 1)
-        t2 = np.expand_dims(t2, 1)
-        tx = np.concatenate((t1, t2), 1)
-        print tx.shape
-        t3 = tf.map_fn(lambda x: tf.cond(tf.constant(x[1][0] == 0, dtype=tf.bool), lambda: x[1], lambda:x[0]+x[1]), #generally bad practice to use a var outside of lambda scope here but its constant so wtv
-                               tx,
-                               dtype=tf.float32)
-        print t3.eval()
-    '''

@@ -45,7 +45,7 @@ def CapsNet(input_shape=(255, 255, 3),
                         caps_dim=4,
                         name="Capsule_Layer_")(capsa)
 
-    capsc = CapsLayer2D(n_class + 1,
+    capsc = CapsLayer2D(n_class,
                         n_routings=n_routings,
                         caps_dim=5,
                         last=True,

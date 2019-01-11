@@ -1,6 +1,16 @@
 import tensorflow as tf
 from capsnet_model.caps_layer import CapsLayer2D
 
+#and other deprecated stuff
+
+def create_background_channel(capsule_channels, caps_dim):
+    shape = capsule_channels[0].shape
+    res = np.ones(shape)
+    #res /= np.sqrt(caps_dim)
+    for caps_channel in capsule_channels:
+        res[np.nonzero(caps_channel)] = 0
+    return res
+
 class CapsNet(tf.keras.Model):
     # Input 4D tensor (samples/ batch size, rows, cols, channels)
     def __init__(self, routings=3, n_conv_layers=3, rows=255, cols=255):

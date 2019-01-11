@@ -40,10 +40,9 @@ def to_tensors(directory, name,
         img_np = np.array(img)
     #print capsules
     caps_channel = create_capsule_channel(img_np, capsules, caps_dim, x_s, y_s)
-    bg_channel = create_background_channel([caps_channel], caps_dim)
-    caps_channel = np.expand_dims(caps_channel, -2)
-    bg_channel = np.expand_dims(bg_channel, -2)
-    target_tensor = np.concatenate((caps_channel, bg_channel), axis=-2)
+    caps_channel = np.expand_dims(caps_channel, -2) #[rows, cols, 1, caps_dim]
+    target_tensor = caps_channel #just 1 class for now
+    #target_tensor = np.concatenate((caps_channel, bg_channel), axis=-2) save this for other caps_channels
     return img_np.astype(np.float32), target_tensor.astype(np.float32)
 
 def create_capsule_channel(img_tensor, capsules, caps_dim, x_s, y_s):
@@ -55,14 +54,6 @@ def create_capsule_channel(img_tensor, capsules, caps_dim, x_s, y_s):
         x = int(np.round(capsule_unmap(x_s[i], 0, img_tensor.shape[1])))
         y = int(np.round(capsule_unmap(y_s[i], 0, img_tensor.shape[0])))
         res[y, x] = capsule
-    return res
-
-def create_background_channel(capsule_channels, caps_dim):
-    shape = capsule_channels[0].shape
-    res = np.ones(shape)
-    #res /= np.sqrt(caps_dim)
-    for caps_channel in capsule_channels:
-        res[np.nonzero(caps_channel)] = 0
     return res
 
 def parse_fn_caps_tfrecord(example_proto):
@@ -79,7 +70,7 @@ def parse_fn_caps_tfrecord(example_proto):
     d = tf.cast(parsed_features['depth'], tf.int32)
     img = tf.decode_raw(parsed_features["image_raw"], tf.float32)
     img = tf.reshape(img, [h, w, d])
-    n_caps_channels = tf.cast(parsed_features['n_classes'], tf.int32) + 1
+    n_caps_channels = tf.cast(parsed_features['n_classes'], tf.int32)
     caps_dim = tf.cast(parsed_features['caps_dim'], tf.int32)
     target_output = tf.decode_raw(parsed_features["output_raw"], tf.float32)
     target_output = tf.reshape(target_output, [h, w, n_caps_channels, caps_dim])
