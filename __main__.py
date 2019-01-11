@@ -128,5 +128,7 @@ if __name__ == "__main__":
             print("No existing saved model/ checkpoint found, reinitializing random weights..")
     
     model.summary()
-
-    train(model=model, args=args, data=None)
+    sess = tf.Session()
+    with sess.as_default():
+        sess.run(tf.global_variables_initializer())
+        train(model=model, args=args, data=None)
