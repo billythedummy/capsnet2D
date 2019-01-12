@@ -7,7 +7,7 @@ class CapsLayer2D(tf.keras.layers.Layer):
                  rows=None, #same as input by default
                  cols=None, #same as input by default
                  caps_dim=None, #same dimension as input capsules by default
-                 kernel_initializer='glorot_uniform',
+                 kernel_initializer='random_uniform',
                  b_initializer='zeros',
                  last=False,
                  **kwargs):
