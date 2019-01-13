@@ -11,22 +11,22 @@ def CapsNet(input_shape=(255, 255, 3),
                                                    (19, 19),
                                                    padding="same",
                                                    name="conv1_19x19x6")(input_layer)
-    bn1 = tf.keras.layers.BatchNormalization(name="bn1")(conv1)
-    relu1 = tf.keras.layers.Activation('elu', name="elu1")(bn1)
+    #bn1 = tf.keras.layers.BatchNormalization(name="bn1")(conv1)
+    relu1 = tf.keras.layers.Activation('elu', name="elu1")(conv1)
 
     conv2 = tf.keras.layers.SeparableConvolution2D(12,
                                                    (19, 19),
                                                    padding="same",
                                                    name="conv2_19x19x12")(relu1)
-    bn2 = tf.keras.layers.BatchNormalization(name="bn2")(conv2)
-    relu2 = tf.keras.layers.Activation('elu', name="elu2")(bn2)
+    #bn2 = tf.keras.layers.BatchNormalization(name="bn2")(conv2)
+    relu2 = tf.keras.layers.Activation('elu', name="elu2")(conv2)
 
     conv3 = tf.keras.layers.SeparableConvolution2D(22,
                                                    (19, 19),
                                                    padding="same",
                                                    name="conv3_19x19x24")(relu2)
-    bn3 = tf.keras.layers.BatchNormalization(name="bn3")(conv3)
-    relu3 = tf.keras.layers.Activation('elu', name="elu3")(bn3)
+    #bn3 = tf.keras.layers.BatchNormalization(name="bn3")(conv3)
+    relu3 = tf.keras.layers.Activation('elu', name="elu3")(conv3)
 
     concat = tf.keras.layers.concatenate([relu1, relu2, relu3],
                                          axis=-1,
