@@ -7,7 +7,7 @@ from capsnet_model.caps_layer import squash
 from utils.to_tfrecord import parse_fn_caps_tfrecord
 
 def weighted_vec_loss(y_true, y_pred):
-    weight = 65025 * 1463716.6470588236
+    weight = 1626351.9411764706
     
     #n_classes = tf.keras.backend.int_shape(y_pred)[-2]
     #y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
