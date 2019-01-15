@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import csv
 from PIL import Image
-from utils.to_capsule import to_capsule, linear_map, capsule_unmap
+from utils.to_capsule import to_capsule, linear_map, capsule_unmap, add_mask
 import glob
 import os
 
@@ -26,25 +26,34 @@ def to_tensors(directory, name,
     csv_file = directory + "/" + name + ".csv"
     with open(csv_file, "rb") as csv_f:
         reader = csv.reader(csv_f, delimiter=",")
-        capsules = []
-        x_s = []
-        y_s = []
+        ##capsules = []
+        ##x_s = []
+        ##y_s = []
+        img_zeros = np.zeros(img_np.shape[0:2])
         for row in reader:
-            cap, x, y = to_capsule(row, img_np)
-            assert cap.shape[0] == caps_dim, "Caps dim of caps returned by to_capsule does not match specified"
-            capsules.append(cap)
-            x_s.append(x)
-            y_s.append(y)
+            img_zeros = add_mask(row, img_zeros)
+            ##cap, x, y = to_capsule(row, img_np)
+            ##assert cap.shape[0] == caps_dim, "Caps dim of caps returned by to_capsule does not match specified"
+            ##capsules.append(cap)
+            ##x_s.append(x)
+            ##y_s.append(y)
     if out_width != img_np.shape[1] or out_height != img_np.shape[0]:
         img = img.resize((out_width, out_height))
         img_np = np.array(img)
+        img_zeros = Image.fromarray(np.uint8(img_zeros))
+        img_zeros = img_zeros.resize((255, 255))
+        img_zeros = np.array(img_zeros)
     #print capsules
-    caps_channel = create_capsule_channel(img_np, capsules, caps_dim, x_s, y_s)
-    caps_channel = np.expand_dims(caps_channel, -2) #[rows, cols, 1, caps_dim]
-    target_tensor = caps_channel #just 1 class for now
+    ##caps_channel = create_capsule_channel(img_np, capsules, caps_dim, x_s, y_s)
+    ##caps_channel = np.expand_dims(caps_channel, -2) #[rows, cols, 1, caps_dim]
     #target_tensor = np.concatenate((caps_channel, bg_channel), axis=-2) save this for other caps_channels
+    target_tensor = np.expand_dims(img_zeros, -1) #just 1 class for now
+    target_tensor = np.expand_dims(target_tensor, -1) #[rows, cols, 1, 1]
+    target_tensor_shape = target_tensor.shape
+    for i in range(caps_dim - 1):
+        target_tensor = np.concatenate((target_tensor, np.zeros(target_tensor_shape)), axis=-1)
     return img_np.astype(np.float32), target_tensor.astype(np.float32)
-
+    
 def create_capsule_channel(img_tensor, capsules, caps_dim, x_s, y_s):
     shape = np.array(img_tensor.shape[:2])
     shape = np.append(shape, caps_dim)

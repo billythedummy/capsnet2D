@@ -1,4 +1,6 @@
 import numpy as np
+from skimage.draw import line
+from scipy import ndimage as ndi
 
 SCALE_MIN = 0.0
 SCALE_MAX = 1.0
@@ -24,6 +26,18 @@ def to_capsule(csv_row, img):
     y = linear_map(c[1], 0, img.shape[0])
     return np.array([1.0, w, h, phi, theta]), x, y #x y encoded by linear map
 
+def add_mask(csv_row, channel_zeros):
+    # Adds the pixel mask to an img of zeros (binary encoding)
+    # Modifies channel_zeros, a np array (height, width) of zeros
+    # Returns np array (height, width)
+    csv_row = np.array(csv_row, dtype=np.float32)
+    x1, y1, x2, y2, x3, y3, x4, y4, theta = csv_row
+    channel_zeros[line(y1.astype(int), x1.astype(int), y2.astype(int), x2.astype(int))] = 1
+    channel_zeros[line(y2.astype(int), x2.astype(int), y3.astype(int), x3.astype(int))] = 1
+    channel_zeros[line(y3.astype(int), x3.astype(int), y4.astype(int), x4.astype(int))] = 1
+    channel_zeros[line(y4.astype(int), x4.astype(int), y1.astype(int), x1.astype(int))] = 1
+    return ndi.binary_fill_holes(channel_zeros)
+ 
 def to_drawable(capsule, img, x, y):
     w = capsule_unmap(capsule[1], 0, img.shape[1])
     h = capsule_unmap(capsule[2], 0, img.shape[0])
@@ -68,6 +82,9 @@ def get_vertex_arrays(vertices):
     return xi, yi, xiplus1, yiplus1
 
 def get_edge_vectors(xi, yi, xiplus1, yiplus1):
+    # returns [[e1_x, e1_y], [e2_x, e2_y], [e3_x, e3_y], [e4_x, e4_y]]
+    # Where ei is the edge vector and the sequence is in clockwise
+    # or counter clockwise directions around the polygon
     x_diff = xiplus1 - xi
     y_diff = yiplus1 - yi
     x_diff = np.expand_dims(x_diff, 0)
@@ -125,30 +142,49 @@ def linear_map(val, val_min, val_max, conv_min=SCALE_MIN, conv_max=SCALE_MAX):
     conv_range = np.float32(conv_max - conv_min)
     return ((val - val_min) / val_range) * conv_range + conv_min
     
-
 if __name__ == "__main__":
     import csv
     import matplotlib as mpl
     mpl.use('TkAgg')
     import matplotlib.pyplot as plt
-
-    fig, ax = plt.subplots()
+    from PIL import Image
+    import glob
+    import os
+    
     direc = "../../capsnet_data/data/raw/"
-    im_name = "test"
-    im_file = direc + im_name + ".jpg"
-    img = plt.imread(im_file)
-    plt.imshow(img)
-    csv_file = direc + im_name + '.csv'
-    with open(csv_file, 'rb') as csv_f:
-        reader = csv.reader(csv_f, delimiter=',')
-        for row in reader:
-            row = np.array(row, dtype=np.float32)
-            #print to_capsule(row, img)
-            x = row[0:7:2]
-            x = np.append(x, row[0])
-            y = row[1:8:2]
-            y = np.append(y, row[1])
-            ax.plot(x, y, linewidth=3, color="red")
+    names = [os.path.basename(os.path.normpath(fname)).rsplit(".", 1)[0] for fname in glob.glob(direc+"/*.csv")]
+    for im_name in names:
+        im_file = direc + im_name + ".jpg"
+        img = plt.imread(im_file)
+        plt.imshow(img)
         plt.show()
+        csv_file = direc + im_name + '.csv'
+        with open(csv_file, 'rb') as csv_f:
+            reader = csv.reader(csv_f, delimiter=',')
+            img_zeros = np.zeros(img.shape[0:2])
+            for row in reader:
+                row = np.array(row, dtype=np.float32)
+                img_zeros = add_mask(row, img_zeros)
+                #print to_capsule(row, img)
+                #x = row[0:7:2]
+                #x = np.append(x, row[0])
+                #y = row[1:8:2]
+                #y = np.append(y, row[1])
+                #ax.plot(x, y, linewidth=3, color="red")
+            img_zeros = Image.fromarray(np.uint8(img_zeros))
+            img_zeros = img_zeros.resize((255, 255))
+            img_zeros = np.array(img_zeros)
+            print np.count_nonzero(img_zeros)
+            caps_dim = 6
+            target_tensor = np.expand_dims(img_zeros, -1) #just 1 class for now
+            target_tensor = np.expand_dims(target_tensor, -1)
+            target_tensor_shape = target_tensor.shape
+            for i in range(caps_dim - 1):
+                target_tensor = np.concatenate((target_tensor, np.zeros(target_tensor_shape)), axis=-1)
+            #print target_tensor
+            print target_tensor.shape
+            print np.count_nonzero(target_tensor)
 
+            plt.imshow(img_zeros)
+            plt.show()
             

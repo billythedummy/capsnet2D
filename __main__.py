@@ -37,6 +37,17 @@ def weighted_vec_loss(y_true, y_pred):
     #print(loss)
     return loss
 
+def weighted_bce(y_true, y_pred):
+    weight = 1626351.9411764706
+    mag_sq = tf.reduce_sum(tf.square(y_pred), axis=-1)
+    mag = tf.sqrt(mag_sq)
+    mag_true = y_true[:,:,:,:,0]
+    ones = tf.ones(tf.shape(mag_sq))
+    #all tensors in operation below have dims [None, h, w, n_classes]
+    loss_sum = -(weight * tf.multiply(mag_true, tf.log(mag))
+                 + tf.multiply(ones - mag_true, tf.log(ones - mag)))
+    return tf.reduce_mean(loss_sum)
+
 def tfrecord_generator(filenames, batch_size):
     dataset = tf.data.TFRecordDataset(filenames, compression_type='GZIP')
     dataset = dataset.map(parse_fn_caps_tfrecord, num_parallel_calls=8)
@@ -65,7 +76,7 @@ def train(model, args, data=None):
     lr_decay = tf.keras.callbacks.LearningRateScheduler(schedule=lambda epoch: args.lr * (args.lr_decay ** epoch))
 
     model.compile(optimizer=tf.keras.optimizers.Adam(lr=args.lr),
-                  loss=weighted_vec_loss, #tf.keras.losses.mean_squared_error,
+                  loss=weighted_bce, #tf.keras.losses.mean_squared_error,
                   metrics={'capsnet': 'accuracy'})
 
     if data is not None: #for local batches

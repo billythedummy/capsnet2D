@@ -48,10 +48,7 @@ def CapsNet(input_shape=(255, 255, 3),
     capsc = CapsLayer2D(n_class,
                         n_routings=n_routings,
                         caps_dim=5,
-                        last=True,
                         name="Final_Capsules")(capsb)
-
-    
     
     model = tf.keras.Model(input_layer, capsc)
     return model
