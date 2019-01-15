@@ -41,8 +41,9 @@ def weighted_bce(y_true, y_pred):
     weight = 1626351.9411764706
     mag_sq = tf.reduce_sum(tf.square(y_pred), axis=-1)
     mag = tf.sqrt(mag_sq)
+    mag = tf.clip_by_value(mag, 1e-5, 1.0-(1e-5))
     mag_true = y_true[:,:,:,:,0]
-    ones = tf.ones(tf.shape(mag_sq))
+    ones = tf.ones(tf.shape(mag))
     #all tensors in operation below have dims [None, h, w, n_classes]
     loss_sum = -(weight * tf.multiply(mag_true, tf.log(mag))
                  + tf.multiply(ones - mag_true, tf.log(ones - mag)))

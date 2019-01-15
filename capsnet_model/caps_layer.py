@@ -7,9 +7,8 @@ class CapsLayer2D(tf.keras.layers.Layer):
                  rows=None, #same as input by default
                  cols=None, #same as input by default
                  caps_dim=None, #same dimension as input capsules by default
-                 kernel_initializer='random_uniform',
+                 kernel_initializer='glorot_uniform',
                  b_initializer='zeros',
-                 last=False,
                  **kwargs):
         super(CapsLayer2D, self).__init__(**kwargs)
         self.n_caps = n_caps
@@ -17,7 +16,7 @@ class CapsLayer2D(tf.keras.layers.Layer):
         self.rows = rows
         self.cols = cols
         self.caps_dim = caps_dim
-        self.last = last
+        #self.last = last
         self.kernel_initializer = tf.keras.initializers.get(kernel_initializer)
         self.b_initializer = tf.keras.initializers.get(b_initializer)
 
@@ -88,10 +87,10 @@ class CapsLayer2D(tf.keras.layers.Layer):
             res_pred = tf.multiply(b_tiled, res)
             res_pred = tf.reduce_sum(res_pred, -2)
             #[None, rows, cols, n_caps, caps_dim]
-            if self.last:
-                res_pred = normalize_capsules(res_pred)
-            else:
-                res_pred = squash(res_pred)
+            #if self.last:
+                #res_pred = normalize_capsules(res_pred)
+            #else:
+            res_pred = squash(res_pred)
             res_pred = tf.expand_dims(res_pred, -2)
             res_pred = tf.tile(res_pred, tf.constant([1, 1, 1, 1, self.n_input_caps, 1]))
             #copied along input_caps axis [None, row, cols, n_caps, n_input_caps, caps_dim]
@@ -102,10 +101,10 @@ class CapsLayer2D(tf.keras.layers.Layer):
         b_tiled = tf.tile(b_tiled, tf.constant([1, 1, 1, 1, 1, self.caps_dim]))
         res = tf.multiply(b_tiled, res)
         res = tf.reduce_sum(res, -2)
-        if self.last:
-            return normalize_capsules(res)
-        else:
-            return squash(res)
+        #if self.last:
+            #return normalize_capsules(res)
+        #else:
+        return squash(res)
     
 def squash(s, axis=-1, epsilon=1e-7, name=None):
     squared_norm = tf.reduce_sum(tf.square(s), axis=axis,

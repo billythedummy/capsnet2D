@@ -174,16 +174,12 @@ if __name__ == "__main__":
             img_zeros = Image.fromarray(np.uint8(img_zeros))
             img_zeros = img_zeros.resize((255, 255))
             img_zeros = np.array(img_zeros)
-            print np.count_nonzero(img_zeros)
             caps_dim = 6
             target_tensor = np.expand_dims(img_zeros, -1) #just 1 class for now
             target_tensor = np.expand_dims(target_tensor, -1)
             target_tensor_shape = target_tensor.shape
             for i in range(caps_dim - 1):
                 target_tensor = np.concatenate((target_tensor, np.zeros(target_tensor_shape)), axis=-1)
-            #print target_tensor
-            print target_tensor.shape
-            print np.count_nonzero(target_tensor)
 
             plt.imshow(img_zeros)
             plt.show()
