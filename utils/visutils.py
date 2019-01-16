@@ -48,7 +48,16 @@ def draw_on(imgs, capsules, ax, limit=5): #both numpy arrays
         #print(x_list)
         #print(y_list)
         ax.plot(x_list, y_list, linewidth=3, color=colors[this_class % len(colors)])
-    
+
+def draw_seg(imgs, capsules):
+    for i in range(3): #batch, height, width
+        assert imgs.shape[i] == capsules.shape[i], "Shapes [" + str(imgs.shape[i]) +"], [" + str(capsules.shape[i]) + "] do not match"
+    print(capsules)
+    caps_prob = np.squeeze(capsules, -1)
+    one_hot = np.where(caps_prob > 0.9, caps_prob, 0)
+    print(np.count_nonzero(one_hot))
+    return one_hot
+
 if __name__ == "__main__":
     img_path = "../../capsnet_data/data/raw/red_top_3_194.jpg"
     caps = np.concatenate((np.ones(shape=[1, 1080, 1920, 1, 5], dtype=np.float32),

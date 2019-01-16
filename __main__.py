@@ -39,14 +39,10 @@ def weighted_vec_loss(y_true, y_pred):
 
 def weighted_bce(y_true, y_pred):
     weight = 1626351.9411764706
-    mag_sq = tf.reduce_sum(tf.square(y_pred), axis=-1)
-    mag = tf.sqrt(mag_sq)
-    mag = tf.clip_by_value(mag, 1e-5, 1.0-(1e-5))
-    mag_true = y_true[:,:,:,:,0]
-    ones = tf.ones(tf.shape(mag))
+    ones = tf.ones(tf.shape(y_pred))
     #all tensors in operation below have dims [None, h, w, n_classes]
-    loss_sum = -(weight * tf.multiply(mag_true, tf.log(mag))
-                 + tf.multiply(ones - mag_true, tf.log(ones - mag)))
+    loss_sum = -(weight * tf.multiply(y_true, tf.log(y_pred))
+                 + tf.multiply(ones - y_true, tf.log(ones - y_pred)))
     return tf.reduce_mean(loss_sum)
 
 def tfrecord_generator(filenames, batch_size):

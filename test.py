@@ -1,6 +1,6 @@
 import tensorflow as tf
 import numpy as np
-from utils.visutils import draw_on
+from utils.visutils import draw_on, draw_seg
 
 from capsnet_model.model import CapsNet
 
@@ -25,8 +25,11 @@ def test_img_dir(img_dir):
         img_exp = np.expand_dims(img, axis=0)
         img_in = tf.convert_to_tensor(img_exp, dtype=tf.float32)
         capsules = model(img_in)
-        draw_on(img_exp, capsules.eval(), ax, limit=5)
+        #draw_on(img_exp, capsules.eval(), ax, limit=5)
         plt.imshow(img)
+        plt.show()
+        mask = draw_seg(img_exp, capsules.eval())
+        plt.imshow(np.squeeze(mask))
         plt.show()
 
 if __name__ == "__main__":

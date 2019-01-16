@@ -1,5 +1,6 @@
 import tensorflow as tf
 from capsnet_model.caps_layer import CapsLayer2D
+from capsnet_model.final_norm_layer import FinalNormLayer
 
 def CapsNet(input_shape=(255, 255, 3),
             n_class=1,
@@ -49,6 +50,8 @@ def CapsNet(input_shape=(255, 255, 3),
                         n_routings=n_routings,
                         caps_dim=5,
                         name="Final_Capsules")(capsb)
+
+    finalnorm = FinalNormLayer()(capsc)
     
-    model = tf.keras.Model(input_layer, capsc)
+    model = tf.keras.Model(input_layer, finalnorm)
     return model

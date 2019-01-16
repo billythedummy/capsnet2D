@@ -29,7 +29,7 @@ def to_capsule(csv_row, img):
 def add_mask(csv_row, channel_zeros):
     # Adds the pixel mask to an img of zeros (binary encoding)
     # Modifies channel_zeros, a np array (height, width) of zeros
-    # Returns np array (height, width)
+    # Returns np array (rows, cols)
     csv_row = np.array(csv_row, dtype=np.float32)
     x1, y1, x2, y2, x3, y3, x4, y4, theta = csv_row
     channel_zeros[line(y1.astype(int), x1.astype(int), y2.astype(int), x2.astype(int))] = 1
