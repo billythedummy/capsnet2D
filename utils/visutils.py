@@ -54,7 +54,7 @@ def draw_seg(imgs, capsules):
         assert imgs.shape[i] == capsules.shape[i], "Shapes [" + str(imgs.shape[i]) +"], [" + str(capsules.shape[i]) + "] do not match"
     print(capsules)
     caps_prob = np.squeeze(capsules, -1)
-    one_hot = np.where(caps_prob > 0.9, caps_prob, 0)
+    one_hot = np.where(caps_prob > 0.971, caps_prob, 0)
     print(np.count_nonzero(one_hot))
     return one_hot
 

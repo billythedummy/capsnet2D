@@ -15,7 +15,6 @@ def calculate_pixel_weights(directory,
     counts = {"background": 0}
     for name in class_labels:
         counts[name] = 0
-    print counts
     for name in names:
         img, target = to_tensors(directory,
                                  name,
@@ -24,9 +23,11 @@ def calculate_pixel_weights(directory,
                                  out_height,
                                  caps_dim)
         
-        probs = target[:,:,:,:1]
+        probs = target
         non_zero_indices = np.array(np.nonzero(probs)).T
-        non_zero_counts = non_zero_indices[:, -2]
+        non_zero_counts = non_zero_indices[:, -1]
+        #Gets a 1 dimension array with each element as the channel
+        #index of each non-zero pixel
         non_zero_counts_int = 0
         for i in range(len(class_labels)):
             count = np.array(np.where(non_zero_counts == i)).shape[-1]
