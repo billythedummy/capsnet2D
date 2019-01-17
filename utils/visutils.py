@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from to_capsule import to_drawable
 
 colors = ["red", "blue"]
+color_dict = {"red": (0, 0, 255), "blue": (255, 0, 0)}
 
 def draw_on(imgs, capsules, ax, limit=5): #both numpy arrays
     for i in range(3): #batch, height, width
@@ -52,11 +53,27 @@ def draw_on(imgs, capsules, ax, limit=5): #both numpy arrays
 def draw_seg(imgs, capsules):
     for i in range(3): #batch, height, width
         assert imgs.shape[i] == capsules.shape[i], "Shapes [" + str(imgs.shape[i]) +"], [" + str(capsules.shape[i]) + "] do not match"
-    print(capsules)
-    caps_prob = np.squeeze(capsules, -1)
-    one_hot = np.where(caps_prob > 0.971, caps_prob, 0)
-    print(np.count_nonzero(one_hot))
-    return one_hot
+    #print(capsules)
+    #[batch, height, width, n_classes]
+    bgr_mask = np.zeros(imgs.shape)
+    #print bgr_mask.shape
+    #[batch, height, width, channels]
+    cutoff = 0.104483
+    for i in range(len(colors) - 1): #-1 for now bec blue hasnt been implemented
+        class_channel = capsules[:,:,:,i]
+        this_class = colors[i]
+        b = np.array(np.where(class_channel > cutoff,
+                              color_dict[this_class][0], 0))
+        b = np.expand_dims(b, -1)
+        g = np.array(np.where(class_channel > cutoff,
+                              color_dict[this_class][1], 0))
+        g = np.expand_dims(g, -1)
+        r = np.array(np.where(class_channel > cutoff,
+                              color_dict[this_class][2], 0))
+        r = np.expand_dims(r, -1)
+        this_mask = np.concatenate((b, g, r), axis=-1) #bgr convention following opencv
+        bgr_mask += this_mask
+    return bgr_mask
 
 if __name__ == "__main__":
     img_path = "../../capsnet_data/data/raw/red_top_3_194.jpg"
