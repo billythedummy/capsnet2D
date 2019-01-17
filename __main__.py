@@ -69,12 +69,30 @@ def train(model, args, data=None):
                                                  save_best_only=True, #True can only work if there is a validation/ test set
                                                  save_weights_only=True,
                                                  verbose=1)
+
+    def cyclic_lr(epoch):
+        multiple = args.lr_decay ** (epoch % args.lr_cycle) if epoch % args.lr_cycle else 1
+        return args.lr * multiple
     
-    lr_decay = tf.keras.callbacks.LearningRateScheduler(schedule=lambda epoch: args.lr * (args.lr_decay ** epoch))
+    lr_decay = tf.keras.callbacks.LearningRateScheduler(schedule=cyclic_lr)
 
     model.compile(optimizer=tf.keras.optimizers.Adam(lr=args.lr),
                   loss=weighted_bce, #tf.keras.losses.mean_squared_error,
                   metrics={'capsnet': 'accuracy'})
+    
+    model.summary()
+    
+    if args.from_chkpt or args.from_saved:
+        if args.from_chkpt:
+            chkpts = glob.glob(args.working_dir + "/chkpts/chkpt-*.h5")
+        else:
+            chkpts = glob.glob(args.working_dir + "/trained_model.h5")
+        if len(chkpts) > 0:
+            path = sorted(chkpts)[-1]
+            model.load_weights(path)
+            print("Weights loaded from " + path)
+        else:
+            print("No existing saved model/ checkpoint found, reinitializing random weights..")
 
     if data is not None: #for local batches
         (x_train, y_train), (x_test, y_test) = data
@@ -87,7 +105,7 @@ def train(model, args, data=None):
     else: #for TFRecord
         training_set = tfrecord_generator(args.working_dir + "/" + args.train_path, args.batch_size)
         eval_set = tfrecord_generator(args.working_dir + "/" + args.eval_path, 2)
-        #bec I know i have 5 images in my eval set rn. Really gotta fix these hardcoded sample size bs
+        #bec I know i have 20 images in my eval set rn. Really gotta fix these hardcoded sample size bs
         #but eval_set batch size must be equal to training set batch size bec capsule layer dimensions is hardcoded at init rn
         model.fit(training_set.make_one_shot_iterator(),
                   steps_per_epoch=max(1, int(40 / args.batch_size)), #lol shit how to determine dataset size from tfrecord file
@@ -117,6 +135,7 @@ if __name__ == "__main__":
     parser.add_argument("--working_dir", default="../capsnet_data", type=str)
     parser.add_argument("--train_path", default="data/tfrecord/train.tfrecords", type=str)
     parser.add_argument("--eval_path", default="data/tfrecord/test.tfrecords", type=str)
+    parser.add_argument("--lr_cycle", default=25, type=int)
 
     args = parser.parse_args()
 
@@ -124,20 +143,7 @@ if __name__ == "__main__":
         raise Exception("Error: You can only choose either from_chkpt or from_saved")
 
     model = CapsNet()
-
-    if args.from_chkpt or args.from_saved:
-        if args.from_chkpt:
-            chkpts = glob.glob(args.working_dir + "/chkpts/chkpt-*.h5")
-        else:
-            chkpts = glob.glob(args.working_dir + "/trained_model.h5")
-        if len(chkpts) > 0:
-            path = sorted(chkpts)[-1]
-            model.load_weights(path)
-            print("Weights loaded from " + path)
-        else:
-            print("No existing saved model/ checkpoint found, reinitializing random weights..")
     
-    model.summary()
     sess = tf.Session()
     with sess.as_default():
         sess.run(tf.global_variables_initializer())
