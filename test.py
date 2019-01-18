@@ -45,6 +45,7 @@ def run_live(sess):
     while ret:
         ret, img = cap.read()
         img = cv2.resize(img, (255, 255))
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img_exp = np.expand_dims(img, axis=0)
 
         input_tensor = sess.graph.get_tensor_by_name('input:0')
@@ -54,6 +55,7 @@ def run_live(sess):
         bgr_mask = np.squeeze(draw_seg(img_exp, capsules), 0)
         img_and_mask = img_exp.astype(int) + bgr_mask.astype(int)
         img_and_mask = np.clip(img_and_mask, 0, 255).astype(np.uint8)
+        img_and_mask = cv2.cvtColor(img_and_mask, cv2.COLOR_RGB2BGR)
         cv2.imshow("Live Feed", img_and_mask)
 
         if cv2.waitKey(17) == 27:

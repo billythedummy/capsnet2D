@@ -70,8 +70,14 @@ def train(model, args, data=None):
                                                  save_weights_only=True,
                                                  verbose=1)
 
+    halfway_pt = args.lr_cycle / 2
     def cyclic_lr(epoch):
-        multiple = args.lr_decay ** (epoch % args.lr_cycle) if epoch % args.lr_cycle else 1
+        modulo = epoch % args.lr_cycle
+        if modulo < halfway_pt:
+            multiple = args.lr_decay ** modulo
+        else:
+            multiple = args.lr_cycle - modulo
+            multiple = args.lr_decay ** multiple
         return args.lr * multiple
     
     lr_decay = tf.keras.callbacks.LearningRateScheduler(schedule=cyclic_lr)
