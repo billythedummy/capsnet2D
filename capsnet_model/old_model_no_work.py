@@ -11,6 +11,38 @@ def create_background_channel(capsule_channels, caps_dim):
         res[np.nonzero(caps_channel)] = 0
     return res
 
+#old loss function
+def weighted_vec_loss(y_true, y_pred):
+    weight = 1626351.9411764706
+    
+    #n_classes = tf.keras.backend.int_shape(y_pred)[-2]
+    #y_classes, y_bg = tf.split(y_true, [n_classes, 1], -2)
+    #y_pred_classes, y_pred_bg = tf.split(y_pred, [n_classes, 1], -2)
+
+    #probability for classifiation error
+    #and vector difference for regression error
+
+    #weighted log/ BCE loss for classification error
+    y_classes_prob = y_true[:,:,:,:,0] #1 or 0
+    y_pred_classes_prob = y_pred[:,:,:,:,0]
+    class_prob_ones = tf.ones(tf.shape(y_classes_prob))
+    class_loss = -(weight * tf.multiply(y_classes_prob, tf.log(y_pred_classes_prob))
+                + tf.multiply(class_prob_ones - y_classes_prob, tf.log(class_prob_ones - y_pred_classes_prob)))
+    class_loss = tf.reduce_mean(class_loss)
+    
+    #norm of vector difference/ MSE for regression error
+    y_classes_vec = y_true[:,:,:,:,1:]
+    y_pred_classes_vec = y_pred[:,:,:,:,1:]
+    vec_diff = y_classes_vec - y_pred_classes_vec 
+    vec_diff_squared = tf.reduce_sum(tf.square(vec_diff), -1)
+    ##vec_diff_norm = tf.sqrt(vec_diff_squared)
+    regr_loss = weight * y_classes_prob * vec_diff_squared #so 0 for background pixels
+    regr_loss = tf.reduce_mean(regr_loss)
+    
+    loss = class_loss + regr_loss
+    #print(loss)
+    return loss
+
 class CapsNet(tf.keras.Model):
     # Input 4D tensor (samples/ batch size, rows, cols, channels)
     def __init__(self, routings=3, n_conv_layers=3, rows=255, cols=255):

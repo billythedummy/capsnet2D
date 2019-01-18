@@ -60,7 +60,7 @@ def draw_seg(imgs, capsules):
     rgb_mask = np.zeros(imgs.shape)
     #print bgr_mask.shape
     #[batch, height, width, channels]
-    cutoff = 0.91814
+    cutoff = 0.9902429
     for i in range(len(colors) - 1): #-1 for now bec blue hasnt been implemented
         class_channel = capsules[:,:,:,i]
         this_class = colors[i]
