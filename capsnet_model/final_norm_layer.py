@@ -10,7 +10,7 @@ class FinalNormLayer(tf.keras.layers.Layer):
 
     def call(self, inputs, training=None):
         mag_sq = tf.reduce_sum(tf.square(inputs), axis=-1)
-        return tf.sqrt(mag_sq + tf.keras.backend.epsilon())
+        return tf.sqrt(mag_sq + tf.keras.backend.epsilon(), name="capsnet_output")
 
 
         

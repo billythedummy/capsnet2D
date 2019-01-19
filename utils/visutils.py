@@ -55,7 +55,6 @@ def draw_seg(imgs, capsules):
     #imgs is input to network, capsules is output
     for i in range(3): #batch, height, width
         assert imgs.shape[i] == capsules.shape[i], "Shapes [" + str(imgs.shape[i]) +"], [" + str(capsules.shape[i]) + "] do not match"
-    print(capsules)
     #[batch, height, width, n_classes]
     rgb_mask = np.zeros(imgs.shape)
     #print bgr_mask.shape

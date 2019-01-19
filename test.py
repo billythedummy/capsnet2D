@@ -11,6 +11,7 @@ from PIL import Image
 
 import argparse
 import glob
+import time
 
 def test_img_dir(img_dir, sess):
     img_files = glob.glob(img_dir+"/*.jpg")
@@ -23,13 +24,15 @@ def test_img_dir(img_dir, sess):
         img = img.resize(shape)
         img = np.array(img)
         img_exp = np.expand_dims(img, axis=0)
-        #img_in = tf.convert_to_tensor(img_exp, dtype=tf.float32)
-        #capsules = model(img_in)
-        #draw_on(img_exp, capsules, ax, limit=5)
 
-        input_tensor = sess.graph.get_tensor_by_name('input:0')
-        output_tensor = sess.graph.get_tensor_by_name('final_norm_layer/Sqrt:0')
+        input_tensor = sess.graph.get_tensor_by_name('capsnet_input:0')
+        output_tensor = sess.graph.get_tensor_by_name('final_norm/capsnet_output:0')
+        start = time.time()
         capsules = sess.run(output_tensor, feed_dict={input_tensor: img_exp})
+        
+        print(capsules)
+        #print(capsules.shape)
+        print("Took: " + str(time.time() - start) + "s")
 
         plt.imshow(img)
         plt.show()
@@ -48,8 +51,8 @@ def run_live(sess):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img_exp = np.expand_dims(img, axis=0)
 
-        input_tensor = sess.graph.get_tensor_by_name('input:0')
-        output_tensor = sess.graph.get_tensor_by_name('final_norm_layer/Sqrt:0')
+        input_tensor = sess.graph.get_tensor_by_name('capsnet_input:0')
+        output_tensor = sess.graph.get_tensor_by_name('final_norm/capsnet_output:0')
         capsules = sess.run(output_tensor, feed_dict={input_tensor: img_exp})
 
         bgr_mask = np.squeeze(draw_seg(img_exp, capsules), 0)
@@ -76,9 +79,10 @@ if __name__ == "__main__":
     sess = tf.Session()
     with sess.as_default():
         model = CapsNet(input_shape=input_shape)
-        model.load_weights(args.weights_path)
+        #model.load_weights(args.weights_path)
+        sess.run(tf.initializers.global_variables())
         print("Weights loaded from " + args.weights_path)
-        #model.summary()
+        model.summary()
 	#print [n.name for n in tf.get_default_graph().as_graph_def().node]
         if args.live:
             run_live(sess)
