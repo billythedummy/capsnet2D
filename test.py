@@ -37,7 +37,7 @@ def test_img_dir(img_dir, sess):
         plt.imshow(img)
         plt.show()
         #print capsules
-        mask = draw_seg(img_exp, capsules)
+        mask = draw_seg(img_exp, capsules, 0.53)
         plt.imshow(np.squeeze(mask, 0))
         plt.show()
 
@@ -79,8 +79,8 @@ if __name__ == "__main__":
     sess = tf.Session()
     with sess.as_default():
         model = CapsNet(input_shape=input_shape)
-        #model.load_weights(args.weights_path)
-        sess.run(tf.initializers.global_variables())
+        model.load_weights(args.weights_path)
+        #sess.run(tf.initializers.global_variables())
         print("Weights loaded from " + args.weights_path)
         model.summary()
 	#print [n.name for n in tf.get_default_graph().as_graph_def().node]

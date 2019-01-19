@@ -50,7 +50,7 @@ def draw_on(imgs, capsules, ax, limit=5): #both numpy arrays
         #print(y_list)
         ax.plot(x_list, y_list, linewidth=3, color=colors[this_class % len(colors)])
 
-def draw_seg(imgs, capsules):
+def draw_seg(imgs, capsules, cutoff=0.9):
     #Returns the RGB (NOT BGR) mask of the images in the batch imgs.
     #imgs is input to network, capsules is output
     for i in range(3): #batch, height, width
@@ -59,7 +59,6 @@ def draw_seg(imgs, capsules):
     rgb_mask = np.zeros(imgs.shape)
     #print bgr_mask.shape
     #[batch, height, width, channels]
-    cutoff = 0.9902429
     for i in range(len(colors) - 1): #-1 for now bec blue hasnt been implemented
         class_channel = capsules[:,:,:,i]
         this_class = colors[i]

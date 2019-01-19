@@ -13,7 +13,7 @@ def CapsNet(input_shape=(255, 255, 3),
     reshape = tf.keras.layers.Reshape((input_shape[0], input_shape[1], 8, 4),
                                       name="Capsule_Reshape")(encoder_layers)
 
-    capsa = CapsLayer2D(4,
+    capsa = CapsLayer2D(6,
                         n_routings=n_routings,
                         caps_dim=8,
                         name="Capsule_Layer_7")(reshape)
@@ -90,7 +90,11 @@ def encoder(input_layer):
                                    #kernel_regularizer=l2(l2_reg),
                                    name='conv7')(conv6)
     #conv7 = BatchNormalization(axis=3, momentum=0.99, name='bn7')(conv7)
-    return tf.keras.layers.ELU(name='elu7')(conv7)
+    conv7 = tf.keras.layers.ELU(name='elu7')(conv7)
+    return conv7
+    return tf.keras.layers.concatenate([conv7, conv4],
+                                         axis=-1,
+                                         name="Channel_Concat")
 
 def old_encoder(input_layer):    
     conv1 = tf.keras.layers.SeparableConvolution2D(6,
