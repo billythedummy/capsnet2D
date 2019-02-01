@@ -13,6 +13,8 @@ import argparse
 import glob
 import time
 
+THRESH = 0.832
+
 def test_img_dir(img_dir, sess):
     img_files = glob.glob(img_dir+"/*.jpg")
     img_files.extend(glob.glob(img_dir+"/*.png"))
@@ -34,16 +36,20 @@ def test_img_dir(img_dir, sess):
         #print(capsules.shape)
         print("Took: " + str(time.time() - start) + "s")
 
-        plt.imshow(img)
-        plt.show()
         #print capsules
-        mask = draw_seg(img_exp, capsules, 0.53)
-        plt.imshow(np.squeeze(mask, 0))
+        mask = draw_seg(img_exp, capsules, THRESH)
+        img_and_mask = img.astype(int) + np.squeeze(mask, 0).astype(int)
+        img_and_mask = np.clip(img_and_mask, 0, 255).astype(np.uint8)
+        plt.imshow(img_and_mask)
         plt.show()
 
 def run_live(sess):
     import cv2
-    cap = cv2.VideoCapture(0)
+    cam_index = 0
+    cap = cv2.VideoCapture(cam_index)
+    if not cap.isOpened():
+        print("Camera not opened, retrying")
+        cap.open(cam_index)
     ret = True
     while ret:
         ret, img = cap.read()
@@ -55,13 +61,14 @@ def run_live(sess):
         output_tensor = sess.graph.get_tensor_by_name('final_norm/capsnet_output:0')
         capsules = sess.run(output_tensor, feed_dict={input_tensor: img_exp})
 
-        bgr_mask = np.squeeze(draw_seg(img_exp, capsules), 0)
+        bgr_mask = draw_seg(img_exp, capsules, THRESH)
         img_and_mask = img_exp.astype(int) + bgr_mask.astype(int)
         img_and_mask = np.clip(img_and_mask, 0, 255).astype(np.uint8)
+        img_and_mask = np.squeeze(img_and_mask, 0)
         img_and_mask = cv2.cvtColor(img_and_mask, cv2.COLOR_RGB2BGR)
         cv2.imshow("Live Feed", img_and_mask)
 
-        if cv2.waitKey(17) == 27:
+        if cv2.waitKey(1) == 27:
             cv2.destroyAllWindows()
             cap.release()
             break
