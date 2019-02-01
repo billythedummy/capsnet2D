@@ -1,0 +1,10 @@
+name: hbm
+dependencies:
+  - python=2.7
+  - numpy
+  - tensorflow-gpu=1.9.0
+  - matplotlib
+  - imageio
+  - scikit-image
+  - pip:
+    - opencv-python
